@@ -14,7 +14,7 @@ class User(db.Model):
 
     user_type_id = db.Column(db.Integer, db.ForeignKey('UserType.id'), nullable=False)
 
-    # bank_account = db.relationship('BankAccount', backref='User', lazy=True)
+    bank_account = db.relationship('BankAccount', backref='User', lazy=True)
 
     def __init__(self, first_name, last_name, address, mobile_number, email_id, password, is_deleted, user_type_id):
         self.first_name = first_name
