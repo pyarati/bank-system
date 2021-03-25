@@ -28,7 +28,7 @@ class User(db.Model):
 
 
 class UserType(db.Model):
-    __table__ = 'UserType'
+    __tablename__ = 'UserType'
     id = db.Column(db.Integer, primary_key=True)
     user_type = db.Column(db.String(50), nullable=False)
 
