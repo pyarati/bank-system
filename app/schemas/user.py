@@ -13,7 +13,7 @@ class UserSchema(ma.Schema):
     id = fields.Integer(required=True, validate=Range(min=1))
     first_name = fields.String(required=True, validate=Length(min=4, max=250))
     last_name = fields.String(required=True, validate=Length(min=4, max=250))
-    address = fields.String(required=True, validate=Length(min=5, max=250))
+    address = fields.String(required=True, validate=Length(min=3, max=250))
     mobile_number = fields.String(required=True, validate=Regexp(string_mobile_number))
     email_id = fields.Email(required=True, validate=Regexp(string_email_id))
     password = fields.String(required=True, validate=Regexp(string_password))
