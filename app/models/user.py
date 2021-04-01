@@ -11,7 +11,7 @@ class User(db.Model):
     email_id = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(50), unique=False, nullable=False)
     is_deleted = db.Column(db.Integer)
-    user_created_on = db.Column(db.DateTime, server_default=db.func.now())
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     user_type_id = db.Column(db.Integer, db.ForeignKey('UserType.id'), nullable=False)
 

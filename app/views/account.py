@@ -33,8 +33,8 @@ class BankAccountResource(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
@@ -179,8 +179,8 @@ class BankAccountResourceId(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
@@ -268,8 +268,8 @@ class AccountTypeResource(Resource):
         data = request.get_json()
         errors = account_type_schema.validate(data, partial=True)
         if errors:
-            logger.error("Missing or sending incorrect data to create an activity")
-            response = ResponseGenerator(data={},
+            logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+            response = ResponseGenerator(data=errors,
                                          message="Missing or sending incorrect data to create an activity",
                                          success=False,
                                          status=HTTPStatus.BAD_REQUEST)
@@ -378,8 +378,8 @@ class AccountTypeResourceId(Resource):
             data = request.get_json()
             errors = account_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
@@ -567,8 +567,8 @@ class BranchDetailsResourceId(Resource):
             data = request.get_json()
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)

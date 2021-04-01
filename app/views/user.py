@@ -44,8 +44,8 @@ class UserResources(Resource):
         errors = user_schema.validate(data, partial=True)
 
         if errors:
-            logger.error("Missing or sending incorrect data to create an activity")
-            response = ResponseGenerator(data={},
+            logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+            response = ResponseGenerator(data=errors,
                                          message="Missing or sending incorrect data to create an activity",
                                          success=False,
                                          status=HTTPStatus.BAD_REQUEST)
@@ -208,8 +208,8 @@ class UserResourcesId(Resource):
             errors = user_schema.validate(data, partial=True)
 
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
@@ -327,6 +327,7 @@ class UserTypeResource(Resource):
         db.session.add(user_type_data)
         db.session.commit()
         result = user_type_schema.dump(user_type_data)
+
         logger.info("Response for post request for user type {}".format(result))
         response = ResponseGenerator(data=result,
                                      message="User type record inserted successfully",
@@ -426,8 +427,8 @@ class UserTypeResourceId(Resource):
             data = request.get_json()
             errors = user_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
-                response = ResponseGenerator(data={},
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data=errors,
                                              message="Missing or sending incorrect data to create an activity",
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
@@ -470,8 +471,6 @@ class UserTypeResourceId(Resource):
                     schema:
                         UserTypeSchema
         """
-
-
         try:
             user_type = UserType.query.filter(UserType.id == user_type_id).first()
             db.session.delete(user_type)

@@ -12,8 +12,6 @@ class BankAccount(db.Model):
     branch_id = db.Column(db.Integer, db.ForeignKey('BranchDetails.id'), nullable=False)
     account_type_id = db.Column(db.Integer, db.ForeignKey('AccountType.id'), nullable=False)
 
-    # account_transaction_details = db.relationship('AccountTransactionDetails', backref='BankAccount', lazy=True)
-
     def __init__(self, account_number, is_active, is_deleted, user_id, branch_id, account_type_id):
         self.account_number = account_number
         self.is_active = is_active
