@@ -10,7 +10,7 @@ string_password = "^[a-zA-Z0-9!@#\$%\^\&*_=+-]{8,12}$"
 
 # Define schema for user
 class UserSchema(ma.Schema):
-    id = fields.Integer(required=True, validate=Range(min=1))
+    id = fields.Integer(required=True)
     first_name = fields.String(required=True, validate=Length(min=4, max=250))
     last_name = fields.String(required=True, validate=Length(min=4, max=250))
     address = fields.String(required=True, validate=Length(min=3, max=250))
@@ -31,8 +31,8 @@ users_schema = UserSchema(load_only=load_only, many=True)
 
 # Define schema for user type
 class UserTypeSchema(ma.Schema):
-    id = fields.Int()
-    user_type = fields.Str()
+    id = fields.Integer(required=True)
+    user_type = fields.String(required=True, validate=Length(min=3, max=250))
 
     class Meta:
         fields = ("id", "user_type")
