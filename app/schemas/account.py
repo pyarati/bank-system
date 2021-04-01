@@ -1,6 +1,6 @@
 from marshmallow import fields
 from app import ma
-from marshmallow.validate import Length, Regexp
+from marshmallow.validate import Length
 
 
 class BankAccountSchema(ma.Schema):
