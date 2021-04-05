@@ -1,6 +1,5 @@
 from app import db
 from app.common.log import logger
-from app.models.account import BankAccount
 from app.models.user import User, UserType
 from flask import request
 from flask_restplus import Resource
@@ -39,58 +38,66 @@ class UserResources(Resource):
                     schema:
                         UserSchema
         """
-        # retrieve body data from input JSON
-        data = request.get_json()
-        errors = user_schema.validate(data, partial=True)
+        try:
+            # retrieve body data from input JSON
+            data = request.get_json()
+            errors = user_schema.validate(data, partial=True)
 
-        if errors:
-            logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-            response = ResponseGenerator(data=errors,
-                                         message="Missing or sending incorrect data to create an activity",
-                                         success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
-            return response.error_response()
+            if errors:
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
 
-        if is_email_id_exists(data['email_id']):
-            logger.error("Missing or sending incorrect data to create an activity"
-                         "Duplicate email id")
+            if is_email_id_exists(data['email_id']):
+                logger.error("Missing or sending incorrect data to create an activity"
+                             "Duplicate email id")
+                response = ResponseGenerator(data={},
+                                             message="Missing or sending incorrect data to create an activity."
+                                                     "Duplicate email id.",
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            if is_mobile_number_exists(data['mobile_number']):
+                logger.error("Missing or sending incorrect data to create an activity"
+                             "Duplicate mobile number")
+                response = ResponseGenerator(data={},
+                                             message="Missing or sending incorrect data to create an activity."
+                                                     "Duplicate mobile number.",
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            user_data = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                address=data['address'],
+                mobile_number=data['mobile_number'],
+                email_id=data['email_id'],
+                password=data['password'],
+                is_deleted=0,
+                user_type_id=data['user_type_id'])
+
+            db.session.add(user_data)
+            db.session.commit()
+            result = user_schema.dump(user_data)
+
+            logger.info("Response for post request for user {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="Users record inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("User does not exist")
             response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity."
-                                                 "Duplicate email id.",
+                                         message="User does not exist",
                                          success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
+                                         status=HTTPStatus.NOT_FOUND)
             return response.error_response()
-
-        if is_mobile_number_exists(data['mobile_number']):
-            logger.error("Missing or sending incorrect data to create an activity"
-                         "Duplicate mobile number")
-            response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity."
-                                                 "Duplicate mobile number.",
-                                         success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
-            return response.error_response()
-
-        user_data = User(
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            address=data['address'],
-            mobile_number=data['mobile_number'],
-            email_id=data['email_id'],
-            password=data['password'],
-            is_deleted=0,
-            user_type_id=data['user_type_id'])
-
-        db.session.add(user_data)
-        db.session.commit()
-        result = user_schema.dump(user_data)
-
-        logger.info("Response for post request for user {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="Users record inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
 
     def get(self):
         """
@@ -209,8 +216,8 @@ class UserResourcesId(Resource):
 
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
@@ -319,21 +326,29 @@ class UserTypeResource(Resource):
                     schema:
                         UserTypeSchema
         """
-        # retrieve body data from input JSON
-        data = request.get_json()
-        user_type_data = UserType(
-            user_type=data['user_type'])
+        try:
+            # retrieve body data from input JSON
+            data = request.get_json()
+            user_type_data = UserType(
+                user_type=data['user_type'])
 
-        db.session.add(user_type_data)
-        db.session.commit()
-        result = user_type_schema.dump(user_type_data)
+            db.session.add(user_type_data)
+            db.session.commit()
+            result = user_type_schema.dump(user_type_data)
 
-        logger.info("Response for post request for user type {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="User type record inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
+            logger.info("Response for post request for user type {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="User type record inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("User type does not exist")
+            response = ResponseGenerator(data={},
+                                         message="User type does not exist",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+            return response.error_response()
 
     def get(self):
         """
@@ -428,8 +443,8 @@ class UserTypeResourceId(Resource):
             errors = user_type_schema.validate(data, partial=True)
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()

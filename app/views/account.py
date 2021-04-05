@@ -34,8 +34,8 @@ class BankAccountResource(Resource):
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
@@ -43,7 +43,6 @@ class BankAccountResource(Resource):
             branch_id = data['branch_id']
             zero_filled_number = str(branch_id)
             branch_id = zero_filled_number.zfill(3)
-
             code = random.randint(10000, 99999)
             account_number = f'{branch_id}{code}'
 
@@ -58,7 +57,6 @@ class BankAccountResource(Resource):
             db.session.add(bank_account_data)
             db.session.commit()
             result = bank_account_schema.dump(bank_account_data)
-
             logger.info("Response for get request for bank account list {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Bank account list return successfully",
@@ -93,7 +91,7 @@ class BankAccountResource(Resource):
          """
         try:
             bank_account_data = BankAccount.query.filter(BankAccount.is_deleted == 0)
-            if not bank_account_data:
+            if bank_account_data.count() == 0:
                 raise NoResultFound
 
             result = bank_accounts_schema.dump(bank_account_data)
@@ -180,8 +178,8 @@ class BankAccountResourceId(Resource):
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
@@ -265,28 +263,36 @@ class AccountTypeResource(Resource):
                      schema:
                          AccountTypeSchema
          """
-        data = request.get_json()
-        errors = account_type_schema.validate(data, partial=True)
-        if errors:
-            logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-            response = ResponseGenerator(data=errors,
-                                         message="Missing or sending incorrect data to create an activity",
+        try:
+            data = request.get_json()
+            errors = account_type_schema.validate(data, partial=True)
+            if errors:
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            account_type_data = AccountType(
+                account_type=data['account_type'])
+
+            db.session.add(account_type_data)
+            db.session.commit()
+            result = account_type_schema.dump(account_type_data)
+            logger.info("Response for post request for account type {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="Account type list inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("Account type does not exist")
+            response = ResponseGenerator(data={},
+                                         message="Account type does not exist",
                                          success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
+                                         status=HTTPStatus.NOT_FOUND)
             return response.error_response()
-
-        account_type_data = AccountType(
-            account_type=data['account_type'])
-
-        db.session.add(account_type_data)
-        db.session.commit()
-        result = account_type_schema.dump(account_type_data)
-        logger.info("Response for post request for account type {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="Account type list inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
 
     def get(self):
         """
@@ -379,8 +385,8 @@ class AccountTypeResourceId(Resource):
             errors = account_type_schema.validate(data, partial=True)
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
@@ -451,28 +457,36 @@ class BranchDetailsResource(Resource):
                      schema:
                          BranchDetailsSchema
          """
-        data = request.get_json()
-        errors = branch_details_schema.validate(data, partial=True)
-        if errors:
-            logger.error("Missing or sending incorrect data to create an activity")
+        try:
+            data = request.get_json()
+            errors = branch_details_schema.validate(data, partial=True)
+            if errors:
+                logger.error("Missing or sending incorrect data to create an activity")
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            branch_details_data = BranchDetails(
+                branch_address=data['branch_address'])
+
+            db.session.add(branch_details_data)
+            db.session.commit()
+            result = branch_details_schema.dump(branch_details_data)
+            logger.info("Response for post request for branch details {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="Branch details record inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("Branch details does not exist")
             response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity",
+                                         message="Branch details does not exist",
                                          success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
+                                         status=HTTPStatus.NOT_FOUND)
             return response.error_response()
-
-        branch_details_data = BranchDetails(
-            branch_address=data['branch_address'])
-
-        db.session.add(branch_details_data)
-        db.session.commit()
-        result = branch_details_schema.dump(branch_details_data)
-        logger.info("Response for post request for branch details {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="Branch details record inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
 
     def get(self):
         """
@@ -568,8 +582,8 @@ class BranchDetailsResourceId(Resource):
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
                 logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data=errors,
-                                             message="Missing or sending incorrect data to create an activity",
+                response = ResponseGenerator(data={},
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
