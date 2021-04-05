@@ -29,63 +29,75 @@ class UserResources(Resource):
                 address: string
                 mobile_number: string
                 email_id: string
-                password: int
-                is_deleted: int
-                user_type_id: int
+                password: integer
+                is_deleted: integer
+                user_type_id: integer
             responses:
                 200:
                     description: Users record inserted successfully
                     schema:
                         UserSchema
         """
-        # retrieve body data from input JSON
-        data = request.get_json()
-        errors = user_schema.validate(data, partial=True)
-        if errors:
-            logger.error("Missing or sending incorrect data to create an activity")
-            response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity",
-                                         success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
-            return response.error_response()
-        if is_email_id_exists(data['email_id']):
-            logger.error("Missing or sending incorrect data to create an activity"
-                         "Duplicate email id")
-            response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity."
-                                                 "Duplicate email id.",
-                                         success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
-            return response.error_response()
-        if is_mobile_number_exists(data['mobile_number']):
-            logger.error("Missing or sending incorrect data to create an activity"
-                         "Duplicate mobile number")
-            response = ResponseGenerator(data={},
-                                         message="Missing or sending incorrect data to create an activity."
-                                                 "Duplicate mobile number.",
-                                         success=False,
-                                         status=HTTPStatus.BAD_REQUEST)
-            return response.error_response()
+        try:
+            # retrieve body data from input JSON
+            data = request.get_json()
+            errors = user_schema.validate(data, partial=True)
 
-        user_data = User(
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            address=data['address'],
-            mobile_number=data['mobile_number'],
-            email_id=data['email_id'],
-            password=data['password'],
-            is_deleted=0,
-            user_type_id=data['user_type_id'])
+            if errors:
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
 
-        db.session.add(user_data)
-        db.session.commit()
-        result = user_schema.dump(user_data)
-        logger.info("Response for post request for user {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="Users record inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
+            if is_email_id_exists(data['email_id']):
+                logger.error("Missing or sending incorrect data to create an activity"
+                             "Duplicate email id")
+                response = ResponseGenerator(data={},
+                                             message="Missing or sending incorrect data to create an activity."
+                                                     "Duplicate email id.",
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            if is_mobile_number_exists(data['mobile_number']):
+                logger.error("Missing or sending incorrect data to create an activity"
+                             "Duplicate mobile number")
+                response = ResponseGenerator(data={},
+                                             message="Missing or sending incorrect data to create an activity."
+                                                     "Duplicate mobile number.",
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            user_data = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                address=data['address'],
+                mobile_number=data['mobile_number'],
+                email_id=data['email_id'],
+                password=data['password'],
+                is_deleted=0,
+                user_type_id=data['user_type_id'])
+
+            db.session.add(user_data)
+            db.session.commit()
+            result = user_schema.dump(user_data)
+
+            logger.info("Response for post request for user {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="Users record inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("User does not exist")
+            response = ResponseGenerator(data={},
+                                         message="User does not exist",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+            return response.error_response()
 
     def get(self):
         """
@@ -112,6 +124,7 @@ class UserResources(Resource):
             users = User.query.filter(User.is_deleted == 0)
             if users.count() == 0:
                 raise NoResultFound
+
             result = users_schema.dump(users)
 
             logger.info("Response for get request for user list {}".format(result))
@@ -135,6 +148,7 @@ class UserResourcesId(Resource):
             This is GET API
             Call this api passing a user id
             parameters:
+
                 id:int
                 first_name: string
                 last_name: string
@@ -148,7 +162,7 @@ class UserResourcesId(Resource):
                 404:
                     description: User with this id does not exist
                 200:
-                    description: User id return successfully
+                    description: User with this id return successfully
                     schema:
                         UserSchema
         """
@@ -161,7 +175,7 @@ class UserResourcesId(Resource):
 
             logger.info("Response for get with id request for user {}".format(result))
             response = ResponseGenerator(data=result,
-                                         message="User id return successfully",
+                                         message="User with this id return successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
@@ -191,7 +205,7 @@ class UserResourcesId(Resource):
                 404:
                     description: User with this id does not exist
                 200:
-                    description: User record updated successfully
+                    description: User with this id updated successfully
                     schema:
                         UserSchema
         """
@@ -199,13 +213,15 @@ class UserResourcesId(Resource):
             # retrieve body data from input JSON
             data = request.get_json()
             errors = user_schema.validate(data, partial=True)
+
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
                 response = ResponseGenerator(data={},
-                                             message="Missing or sending incorrect data to create an activity",
+                                             message=errors,
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
+
             if data.get('email_id') and is_email_id_exists(data.get('email_id')):
                 logger.error("Missing or sending incorrect data to create an activity."
                              "Duplicate email id")
@@ -215,6 +231,7 @@ class UserResourcesId(Resource):
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
+
             if data.get('mobile_number') and is_mobile_number_exists(data.get('mobile_number')):
                 logger.error("Missing or sending incorrect data to create an activity"
                              "Duplicate mobile number")
@@ -224,9 +241,11 @@ class UserResourcesId(Resource):
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
+
             user = User.query.filter(User.id == user_id, User.is_deleted == 0).first()
             if not user:
                 raise NoResultFound
+
             user.first_name = data.get('first_name', user.first_name)
             user.last_name = data.get('last_name', user.last_name)
             user.address = data.get('address', user.address)
@@ -240,7 +259,7 @@ class UserResourcesId(Resource):
 
             logger.info("Response for put request for user {}".format(result))
             response = ResponseGenerator(data=result,
-                                         message="User record updated successfully",
+                                         message="User with this id updated successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
@@ -270,7 +289,7 @@ class UserResourcesId(Resource):
                 404:
                     description: User with this id does not exist
                 200:
-                    description: User record deleted successfully
+                    description: User with this id deleted successfully
                     schema:
                         UserSchema
         """
@@ -278,10 +297,14 @@ class UserResourcesId(Resource):
             user = User.query.filter(User.id == user_id, User.is_deleted == 0).first()
             if not user:
                 raise NoResultFound
+
             user.is_deleted = 1
+
             db.session.commit()
+
             logger.info("Response for delete request for user: User deleted successfully")
-            return "User record deleted successfully"
+
+            return "User with this id deleted successfully"
         except NoResultFound:
             logger.exception("Response for delete request for user: User with this id does not exist")
             response = ResponseGenerator(data={},
@@ -303,20 +326,29 @@ class UserTypeResource(Resource):
                     schema:
                         UserTypeSchema
         """
-        # retrieve body data from input JSON
-        data = request.get_json()
-        user_type_data = UserType(
-            user_type=data['user_type'])
+        try:
+            # retrieve body data from input JSON
+            data = request.get_json()
+            user_type_data = UserType(
+                user_type=data['user_type'])
 
-        db.session.add(user_type_data)
-        db.session.commit()
-        result = user_type_schema.dump(user_type_data)
-        logger.info("Response for post request for user type {}".format(result))
-        response = ResponseGenerator(data=result,
-                                     message="User type record inserted successfully",
-                                     success=True,
-                                     status=HTTPStatus.OK)
-        return response.success_response()
+            db.session.add(user_type_data)
+            db.session.commit()
+            result = user_type_schema.dump(user_type_data)
+
+            logger.info("Response for post request for user type {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="User type record inserted successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except NoResultFound:
+            logger.exception("User type does not exist")
+            response = ResponseGenerator(data={},
+                                         message="User type does not exist",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+            return response.error_response()
 
     def get(self):
         """
@@ -333,11 +365,11 @@ class UserTypeResource(Resource):
                         UserTypeSchema
         """
         try:
-            users_type = UserType.query.all()
-            if not users_type:
+            users_type_data = UserType.query.all()
+            if not users_type_data:
                 raise NoResultFound
 
-            result = users_type_schema.dump(users_type)
+            result = users_type_schema.dump(users_type_data)
 
             logger.info("Response for get request for user type list {}".format(result))
             response = ResponseGenerator(data=result,
@@ -371,10 +403,10 @@ class UserTypeResourceId(Resource):
                        UserTypeSchema
         """
         try:
-            user_type = UserType.query.filter(UserType.id == user_type_id).first()
-            result = user_type_schema.dump(user_type)
-            if not user_type:
+            user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
+            if not user_type_data:
                 raise NoResultFound
+            result = user_type_schema.dump(user_type_data)
 
             logger.info("Response for get with id request for user type {}".format(result))
             response = ResponseGenerator(data=result,
@@ -408,13 +440,22 @@ class UserTypeResourceId(Resource):
         try:
             # retrieve body data from input JSON
             data = request.get_json()
-            user_type = UserType.query.filter(UserType.id == user_type_id).first()
-            if not user_type:
+            errors = user_type_schema.validate(data, partial=True)
+            if errors:
+                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
+            user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
+            if not user_type_data:
                 raise NoResultFound
 
-            user_type.user_type = data.get('user_type', user_type.user_type)
+            user_type_data.user_type = data.get('user_type', user_type_data.user_type)
             db.session.commit()
-            result = user_type_schema.dump(user_type)
+            result = user_type_schema.dump(user_type_data)
 
             logger.info("Response for put with id request for user type {}".format(result))
             response = ResponseGenerator(data=result,
@@ -449,7 +490,9 @@ class UserTypeResourceId(Resource):
             user_type = UserType.query.filter(UserType.id == user_type_id).first()
             db.session.delete(user_type)
             db.session.commit()
+
             logger.info("Response for delete request for user type: User type deleted successfully")
+
             return "User type record deleted successfully"
         except Exception:
             logger.exception("Response for delete request for user type: User type with this id does not exist")
