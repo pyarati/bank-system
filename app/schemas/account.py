@@ -13,7 +13,7 @@ class BankAccountSchema(ma.Schema):
     account_type_id = fields.Integer(required=True)
 
     class Meta:
-        fields = ("id", "account_number", "is_active", "is_deleted", "user_id", "branch_id", "account_type_id", "branch_address")
+        fields = ("id", "account_number", "is_active", "is_deleted", "user_id", "branch_id", "account_type_id")
 
 
 bank_account_schema = BankAccountSchema()

@@ -33,6 +33,8 @@ class UserResources(Resource):
                 is_deleted: integer
                 user_type_id: integer
             responses:
+                404:
+                    description: User does not exist
                 200:
                     description: Users record inserted successfully
                     schema:
@@ -321,6 +323,8 @@ class UserTypeResource(Resource):
             parameters:
                 user_type: string
             responses:
+                404:
+                    description: User type does not exist
                 200:
                     description: User type record inserted successfully
                     schema:
@@ -358,7 +362,7 @@ class UserTypeResource(Resource):
                 user_type: string
             responses:
                 404:
-                    description: User with this id does not exist
+                    description: User type does not exist
                 200:
                     description: Users type list return successfully
                     schema:
@@ -398,7 +402,7 @@ class UserTypeResourceId(Resource):
                 404:
                     description: User type with this id does not exist
                 200:
-                    description: Users type id return successfully
+                    description: Users type with this id return successfully
                     schema:
                        UserTypeSchema
         """
@@ -431,9 +435,9 @@ class UserTypeResourceId(Resource):
                 user_type: string
             responses:
                 404:
-                    description: User with this id does not exist
+                    description: User type with this id does not exist
                 200:
-                    description: User record updated successfully
+                    description: User type with this id updated successfully
                     schema:
                         UserTypeSchema
         """
@@ -482,7 +486,7 @@ class UserTypeResourceId(Resource):
                 404:
                     description: User type with this id does not exist
                 200:
-                    description: User type record deleted successfully
+                    description: User type with this id deleted successfully
                     schema:
                         UserTypeSchema
         """

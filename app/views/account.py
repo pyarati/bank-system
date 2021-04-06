@@ -16,13 +16,15 @@ class BankAccountResource(Resource):
              This is POST API
              Create a new bank account
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
+                 404:
+                     description: Bank account does not exits
                  200:
                      description: Bank account record inserted successfully
                      schema:
@@ -75,15 +77,15 @@ class BankAccountResource(Resource):
         """
              This is GET API
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account does not exist
+                     description: Bank account does not exist
                  200:
                      description: Bank account list return successfully
                      schema:
@@ -117,15 +119,15 @@ class BankAccountResourceId(Resource):
              This is GET API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
                      description: Bank account with this id return successfully
                      schema:
@@ -146,7 +148,7 @@ class BankAccountResourceId(Resource):
                                          status=HTTPStatus.OK)
             return response.success_response()
         except NoResultFound:
-            logger.exception("Bank account does not exist")
+            logger.exception("Bank account with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Bank account does not exist",
                                          success=False,
@@ -158,17 +160,17 @@ class BankAccountResourceId(Resource):
              This is PUT API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
-                     description: Bank account with this id return successfully
+                     description: Bank account with this id updated successfully
                      schema:
                          BankAccountSchema
          """
@@ -216,17 +218,17 @@ class BankAccountResourceId(Resource):
              This is DELETE API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
-                     description: Bank account with this id return successfully
+                     description: Bank account with this id deleted successfully
                      schema:
                          BankAccountSchema
          """
@@ -256,10 +258,12 @@ class AccountTypeResource(Resource):
         """
              This is POST API
              parameters:
-                account_type: String
+                 account_type: String
              responses:
+                 404:
+                     description: Account type does not exist
                  200:
-                     description: account type list inserted successfully
+                     description: Account type record inserted successfully
                      schema:
                          AccountTypeSchema
          """
@@ -298,12 +302,12 @@ class AccountTypeResource(Resource):
         """
              This is GET API
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type does not exist
+                     description: Account type does not exist
                  200:
-                     description: account type list return successfully
+                     description: Account type list return successfully
                      schema:
                          AccountTypeSchema
          """
@@ -335,12 +339,12 @@ class AccountTypeResourceId(Resource):
              This is GET API
              Call this api passing a account type id
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type with this id does not exist
+                     description: Account type with this id does not exist
                  200:
-                     description: account type with this id return successfully
+                     description: Account type with this id return successfully
                      schema:
                          AccountTypeSchema
          """
@@ -370,12 +374,12 @@ class AccountTypeResourceId(Resource):
              This is PUT API
              Call this api passing a account type id
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type with this id does not exist
+                     description: Account type with this id does not exist
                  200:
-                     description: account type with this id updated successfully
+                     description: Account type with this id updated successfully
                      schema:
                          AccountTypeSchema
          """
@@ -399,7 +403,7 @@ class AccountTypeResourceId(Resource):
             db.session.commit()
             result = account_type_schema.dump(account_type_data)
 
-            logger.info("Response for put with id request for user type {}".format(result))
+            logger.info("Response for put with id request for account type {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Account type with this id updated successfully",
                                          success=True,
@@ -418,12 +422,12 @@ class AccountTypeResourceId(Resource):
              This is DELETE API
              Call this api passing a account type id
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type with this id does not exist
+                     description: Account type with this id does not exist
                  200:
-                     description: account type with this id deleted successfully
+                     description: Account type with this id deleted successfully
                      schema:
                          AccountTypeSchema
          """
@@ -449,9 +453,11 @@ class BranchDetailsResource(Resource):
         """
              This is POST API
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
+                 404:
+                     description: Branch details does not exist
                  200:
                      description: Branch details record inserted successfully
                      schema:
@@ -492,11 +498,11 @@ class BranchDetailsResource(Resource):
         """
              This is GET API
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details does not exist
+                     description: Branch details does not exist
                  200:
                      description: Branch details list return successfully
                      schema:
@@ -530,11 +536,11 @@ class BranchDetailsResourceId(Resource):
              This is GET API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id return successfully
                      schema:
@@ -566,11 +572,11 @@ class BranchDetailsResourceId(Resource):
              This is PUT API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id updated successfully
                      schema:
@@ -615,11 +621,11 @@ class BranchDetailsResourceId(Resource):
              This is DELETE API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id deleted successfully
                      schema:
