@@ -8,6 +8,7 @@ from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
 import random
+from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeObjectNotFound, BranchDetailsObjectNotFound
 
 
 class BankAccountResource(Resource):
@@ -52,6 +53,7 @@ class BankAccountResource(Resource):
                 account_number=account_number,
                 is_active=1,
                 is_deleted=0,
+                account_balance=1000,
                 user_id=data['user_id'],
                 account_type_id=data['account_type_id'],
                 branch_id=branch_id)
@@ -94,7 +96,7 @@ class BankAccountResource(Resource):
         try:
             bank_account_data = BankAccount.query.filter(BankAccount.is_deleted == 0)
             if bank_account_data.count() == 0:
-                raise NoResultFound
+                raise BankAccountObjectNotFound
 
             result = bank_accounts_schema.dump(bank_account_data)
 
@@ -104,7 +106,7 @@ class BankAccountResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BankAccountObjectNotFound:
             logger.exception("Bank account does not exist")
             response = ResponseGenerator(data={},
                                          message="Bank account does not exist",
@@ -137,17 +139,16 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound
 
             result = bank_account_schema.dump(bank_account_data)
-
             logger.info("Response for get request for bank account list {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Bank account list return successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BankAccountObjectNotFound:
             logger.exception("Bank account with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Bank account does not exist",
@@ -189,7 +190,7 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound
 
             bank_account_data.user_id = data.get('user_id', bank_account_data.user_id)
             bank_account_data.branch_id = data.get('branch_id', bank_account_data.branch_id)
@@ -205,7 +206,7 @@ class BankAccountResourceId(Resource):
                                          status=HTTPStatus.OK)
             return response.success_response()
 
-        except NoResultFound:
+        except BankAccountObjectNotFound:
             logger.exception("Bank account with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Bank account with this id does not exist",
@@ -236,7 +237,7 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound
 
             bank_account_data.is_deleted = 1
             db.session.commit()
@@ -244,7 +245,7 @@ class BankAccountResourceId(Resource):
             logger.info("Response for delete request for user: Bank account deleted successfully")
 
             return "Bank account with this id deleted successfully"
-        except NoResultFound:
+        except BankAccountObjectNotFound:
             logger.exception("Response for delete request for bank account: Bank account with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Bank account with this id does not exit",
@@ -314,7 +315,7 @@ class AccountTypeResource(Resource):
         try:
             account_type_data = AccountType.query.all()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound
 
             result = accounts_type_schema.dump(account_type_data)
 
@@ -324,7 +325,7 @@ class AccountTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTypeObjectNotFound:
             logger.exception("Account type does not exist")
             response = ResponseGenerator(data={},
                                          message="Account type does not exist",
@@ -351,7 +352,7 @@ class AccountTypeResourceId(Resource):
         try:
             account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound
 
             result = account_type_schema.dump(account_type_data)
 
@@ -361,7 +362,7 @@ class AccountTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTypeObjectNotFound:
             logger.exception("Account type with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Account type with this id does not exist",
@@ -397,7 +398,7 @@ class AccountTypeResourceId(Resource):
 
             account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound
 
             account_type_data.account_type = data.get('account_type', account_type_data.account_type)
             db.session.commit()
@@ -409,7 +410,7 @@ class AccountTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTypeObjectNotFound:
             logger.exception("Account type with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Account type with this id does not exist",
@@ -433,13 +434,16 @@ class AccountTypeResourceId(Resource):
          """
         try:
             account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
+            if not account_type_data:
+                raise AccountTypeObjectNotFound
+
             db.session.delete(account_type_data)
             db.session.commit()
 
             logger.info("Response for delete request for account type: Account type deleted successfully")
 
             return "Account type record deleted successfully"
-        except Exception:
+        except AccountTypeObjectNotFound:
             logger.exception("Response for delete request for account type: Account type with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Account type with this id does not exist",
@@ -511,7 +515,7 @@ class BranchDetailsResource(Resource):
         try:
             branch_details_data = BranchDetails.query.all()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound
 
             result = branches_details_schema.dump(branch_details_data)
 
@@ -521,7 +525,7 @@ class BranchDetailsResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BranchDetailsObjectNotFound:
             logger.exception("Branch details does not exist")
             response = ResponseGenerator(data={},
                                          message="Branch details does not exist",
@@ -549,7 +553,7 @@ class BranchDetailsResourceId(Resource):
         try:
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound
 
             result = branch_details_schema.dump(branch_details_data)
 
@@ -559,7 +563,7 @@ class BranchDetailsResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BranchDetailsObjectNotFound:
             logger.exception("Branch details id with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Branch details with this id does not exist",
@@ -596,7 +600,7 @@ class BranchDetailsResourceId(Resource):
 
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound
 
             branch_details_data.branch_address = data.get('branch_address', branch_details_data.branch_address)
             db.session.commit()
@@ -608,7 +612,7 @@ class BranchDetailsResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BranchDetailsObjectNotFound:
             logger.exception("Branch details with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Branch details with this id does not exist",
@@ -633,6 +637,9 @@ class BranchDetailsResourceId(Resource):
          """
         try:
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
+            if not branch_details_data:
+                raise BranchDetailsObjectNotFound
+
             db.session.delete(branch_details_data)
             db.session.commit()
 
@@ -640,7 +647,7 @@ class BranchDetailsResourceId(Resource):
                         "Branch details with this id deleted successfully")
 
             return "Branch details record deleted successfully"
-        except Exception:
+        except BranchDetailsObjectNotFound:
             logger.exception("Response for delete request for branch details:"
                              "Branch details with this id does not exist")
             response = ResponseGenerator(data={},

@@ -7,6 +7,7 @@ class BankAccount(db.Model):
     account_number = db.Column(db.String(8), unique=True)
     is_active = db.Column(db.Integer)
     is_deleted = db.Column(db.Integer)
+    account_balance = db.Column(db.Integer)
 
     user_id = db.Column(db.Integer, db.ForeignKey('User.id'), nullable=False)
     branch_id = db.Column(db.Integer, db.ForeignKey('BranchDetails.id'), nullable=False)
@@ -14,10 +15,11 @@ class BankAccount(db.Model):
 
     account_transaction_details = db.relationship('AccountTransactionDetails', backref='BankAccount', lazy=True)
 
-    def __init__(self, account_number, is_active, is_deleted, user_id, branch_id, account_type_id):
+    def __init__(self, account_number, is_active, is_deleted, account_balance, user_id, branch_id, account_type_id):
         self.account_number = account_number
         self.is_active = is_active
         self.is_deleted = is_deleted
+        self.account_balance = account_balance
         self.user_id = user_id
         self.branch_id = branch_id
         self.account_type_id = account_type_id

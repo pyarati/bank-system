@@ -6,12 +6,17 @@ from marshmallow.validate import Length
 class AccountTransactionDetailsSchema(ma.Schema):
     id = fields.Integer(required=True)
     transaction_amount = fields.Integer(required=True)
+    transaction_status = fields.String(required=True)
     bank_account_id = fields.Integer(required=True)
     transaction_type_id = fields.Integer(required=True)
-    fund_transfer_id = fields.Integer(required=True)
+    fund_transfer_id = fields.Integer(required=False)
+    fund_transfer_info = fields.String(required=False)
 
     class Meta:
-        fields = ("id", "transaction_amount", "bank_account_id", "transaction_type_id", "fund_transfer_id")
+        fields = (
+            "id", "transaction_amount", "transaction_status", "bank_account_id",
+            "transaction_type_id", "fund_transfer_id", "fund_transfer_info"
+        )
 
 
 account_transaction_details_schema = AccountTransactionDetailsSchema()
@@ -32,11 +37,12 @@ transactions_type_schema = TransactionTypeSchema(many=True)
 
 class FundTransferSchema(ma.Schema):
     id = fields.Integer(required=True)
-    source = fields.String(required=True, validate=Length(min=3, max=250))
-    destination = fields.String(required=True, validate=Length(min=3, max=250))
+    from_account = fields.String(required=True, validate=Length(equal=8))
+    to_account = fields.String(required=True, validate=Length(equal=8))
+    transaction_amount = fields.Integer()
 
     class Meta:
-        fields = ("id", "source", "destination")
+        fields = ("id", "from_account", "to_account", "transaction_amount")
 
 
 fund_transfer_schema = FundTransferSchema()

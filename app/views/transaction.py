@@ -1,12 +1,15 @@
 from app import db
+from app.common.custom_exception import BankAccountObjectNotFound, TransactionTypeObjectNotFound, AccountTransactionDetailsObjectNotFound, FundTransferObjectNotFound, MiniStatementObjectNotFound
 from app.common.log import logger
 from flask import request
 from flask_restplus import Resource
+from app.models.account import BankAccount
 from app.models.transaction import AccountTransactionDetails, TransactionType, FundTransfer
 from app.schemas.transaction import account_transaction_details_schema, accounts_transaction_details_schema, transaction_type_schema, transactions_type_schema, fund_transfer_schema, funds_transfer_schema
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import desc
 
 
 class AccountTransactionDetailsResource(Resource):
@@ -29,39 +32,85 @@ class AccountTransactionDetailsResource(Resource):
                          AccountTransactionDetailsSchema
          """
         # retrieve body data from input JSON
-        try:
-            data = request.get_json()
-            errors = account_transaction_details_schema.validate(data, partial=True)
-            if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
-                response = ResponseGenerator(data={},
-                                             message=errors,
-                                             success=False,
-                                             status=HTTPStatus.BAD_REQUEST)
-                return response.error_response()
 
+        data = request.get_json()
+        errors = account_transaction_details_schema.validate(data, partial=True)
+        if errors:
+            logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+            response = ResponseGenerator(data={},
+                                         message=errors,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+            return response.error_response()
+
+        try:
+            # get bank account details
+            bank_account = BankAccount.query.filter(BankAccount.id == data['bank_account_id']).first()
+            if not bank_account:
+                raise BankAccountObjectNotFound
+
+            # get transaction type details
+            transactions_type = TransactionType.query.filter(TransactionType.id == data['transaction_type_id']).first()
+            if not transactions_type:
+                raise TransactionTypeObjectNotFound
+
+            # for credit
+            if transactions_type.transaction_type.lower() == 'credit':
+                bank_account.account_balance += data['transaction_amount']
+                db.session.add(bank_account)
+                transaction_status = "success"
+            # for debit
+            elif transactions_type.transaction_type.lower() == 'debit':
+                if bank_account.account_balance - 1000 - data['transaction_amount'] > 0:
+                    bank_account.account_balance -= data['transaction_amount']
+                    db.session.add(bank_account)
+                    transaction_status = "success"
+                else:
+                    transaction_status = "failed"
+
+            # fund transfer type - funds withdraw
+            fund_transfer_data = FundTransfer(
+                from_account=bank_account.account_number,
+                to_account=None
+            )
+
+            db.session.add(fund_transfer_data)
+            db.session.commit()
+            fund_transfer = fund_transfer_schema.dump(fund_transfer_data)
+
+            # create account transaction
             bank_account_data = AccountTransactionDetails(
                 transaction_amount=data['transaction_amount'],
+                transaction_status=transaction_status,
                 bank_account_id=data['bank_account_id'],
                 transaction_type_id=data['transaction_type_id'],
-                fund_transfer_id=data['fund_transfer_id'])
+                fund_transfer_id=fund_transfer.get('id'),
+                fund_transfer_info=data['fund_transfer_info']
+            )
 
             db.session.add(bank_account_data)
             db.session.commit()
             result = account_transaction_details_schema.dump(bank_account_data)
             logger.info("Response for get request for account transaction details list {}".format(result))
             response = ResponseGenerator(data=result,
-                                         message="Account transaction details list inserted successfully",
+                                         message="Account transaction details added successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Account transaction details does not exist")
+
+        except BankAccountObjectNotFound:
+            logger.exception("Bank account details not found")
             response = ResponseGenerator(data={},
-                                         message="Account transaction details does not exist",
+                                         message="Invalid Bank Account",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except TransactionTypeObjectNotFound:
+            logger.exception("Transaction type details not found")
+            response = ResponseGenerator(data={},
+                                         message="Invalid Transaction Type",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+        return response.error_response()
 
     def get(self):
         """
@@ -83,7 +132,7 @@ class AccountTransactionDetailsResource(Resource):
         try:
             account_transaction_details_data = AccountTransactionDetails.query.all()
             if not account_transaction_details_data:
-                raise NoResultFound
+                raise AccountTransactionDetailsObjectNotFound
 
             result = accounts_transaction_details_schema.dump(account_transaction_details_data)
 
@@ -93,7 +142,7 @@ class AccountTransactionDetailsResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTransactionDetailsObjectNotFound:
             logger.exception("Account transaction details does not exist")
             response = ResponseGenerator(data={},
                                          message="Account transaction details does not exist",
@@ -124,7 +173,7 @@ class AccountTransactionDetailsResourceId(Resource):
         try:
             account_transaction_details_data = AccountTransactionDetails.query.filter(AccountTransactionDetails.id == account_transaction_details_id).first()
             if not account_transaction_details_data:
-                raise NoResultFound
+                raise AccountTransactionDetailsObjectNotFound
 
             result = account_transaction_details_schema.dump(account_transaction_details_data)
 
@@ -134,7 +183,7 @@ class AccountTransactionDetailsResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTransactionDetailsObjectNotFound:
             logger.exception("Account transaction details does not exist")
             response = ResponseGenerator(data={},
                                          message="Account transaction details does not exist",
@@ -174,12 +223,13 @@ class AccountTransactionDetailsResourceId(Resource):
 
             account_transaction_details_data = AccountTransactionDetails.query.filter(AccountTransactionDetails.id == account_transaction_details_id).first()
             if not account_transaction_details_data:
-                raise NoResultFound
+                raise AccountTransactionDetailsObjectNotFound
 
             account_transaction_details_data.transaction_amount = data.get('transaction_amount', account_transaction_details_data.transaction_amount)
             account_transaction_details_data.bank_account_id = data.get('bank_account_id', account_transaction_details_data.bank_account_id)
             account_transaction_details_data.transaction_type_id = data.get('transaction_type_id', account_transaction_details_data.transaction_type_id)
             account_transaction_details_data.fund_transfer_id = data.get('fund_transfer_id', account_transaction_details_data.fund_transfer_id)
+            account_transaction_details_data.fund_transfer_type = data.get('fund_transfer_type', account_transaction_details_data.fund_transfer_type)
 
             db.session.commit()
             result = account_transaction_details_schema.dump(account_transaction_details_data)
@@ -191,7 +241,7 @@ class AccountTransactionDetailsResourceId(Resource):
                                          status=HTTPStatus.OK)
             return response.success_response()
 
-        except NoResultFound:
+        except AccountTransactionDetailsObjectNotFound:
             logger.exception("Account transaction details with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Account transaction details with this id does not exist",
@@ -219,6 +269,9 @@ class AccountTransactionDetailsResourceId(Resource):
          """
         try:
             account_transaction_details_data = AccountTransactionDetails.query.filter(AccountTransactionDetails.id == account_transaction_details_id).first()
+            if not account_transaction_details_data:
+                raise AccountTransactionDetailsObjectNotFound
+
             db.session.delete(account_transaction_details_data)
             db.session.commit()
 
@@ -226,7 +279,7 @@ class AccountTransactionDetailsResourceId(Resource):
                         "Account transaction details with this id deleted successfully")
 
             return "Account transaction details record deleted successfully"
-        except Exception:
+        except AccountTransactionDetailsObjectNotFound:
             logger.exception("Response for delete request for account transaction details:"
                              "Account transaction details with this id does not exist")
             response = ResponseGenerator(data={},
@@ -297,17 +350,16 @@ class TransactionTypeResource(Resource):
         try:
             transaction_type_data = TransactionType.query.all()
             if not transaction_type_data:
-                raise NoResultFound
+                raise TransactionTypeObjectNotFound
 
             result = transactions_type_schema.dump(transaction_type_data)
-
             logger.info("Response for get request for transaction type list {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Transaction type list return successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except TransactionTypeObjectNotFound:
             logger.exception("Transaction type does not exist")
             response = ResponseGenerator(data={},
                                          message="Transaction type does not exist",
@@ -334,7 +386,7 @@ class TransactionTypeResourceId(Resource):
         try:
             transaction_type_data = TransactionType.query.filter(TransactionType.id == transaction_type_id).first()
             if not transaction_type_data:
-                raise NoResultFound
+                raise TransactionTypeObjectNotFound
 
             result = transaction_type_schema.dump(transaction_type_data)
 
@@ -344,7 +396,7 @@ class TransactionTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except TransactionTypeObjectNotFound:
             logger.exception("Transaction type with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Transaction type with this id does not exist",
@@ -380,7 +432,7 @@ class TransactionTypeResourceId(Resource):
 
             transaction_type_data = TransactionType.query.filter(TransactionType.id == transaction_type_id).first()
             if not transaction_type_data:
-                raise NoResultFound
+                raise TransactionTypeObjectNotFound
 
             transaction_type_data.transaction_type = data.get('transaction_type', transaction_type_data.transaction_type)
             db.session.commit()
@@ -392,7 +444,7 @@ class TransactionTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except TransactionTypeObjectNotFound:
             logger.exception("Transaction type with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Transaction type with this id does not exist",
@@ -416,6 +468,9 @@ class TransactionTypeResourceId(Resource):
          """
         try:
             transaction_type_data = TransactionType.query.filter(TransactionType.id == transaction_type_id).first()
+            if not transaction_type_data:
+                raise TransactionTypeObjectNotFound
+
             db.session.delete(transaction_type_data)
             db.session.commit()
 
@@ -423,7 +478,7 @@ class TransactionTypeResourceId(Resource):
                         "Transaction type with this id deleted successfully")
 
             return "Transaction type record deleted successfully"
-        except Exception:
+        except TransactionTypeObjectNotFound:
             logger.exception("Response for delete request for transaction type:"
                              "Transaction type with this id does not exist")
             response = ResponseGenerator(data={},
@@ -459,23 +514,74 @@ class FundTransferResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
+            # fund transfer type - funds transfer
             fund_transfer_data = FundTransfer(
-                source=data['source'],
-                destination=data['destination'])
+                from_account=data['from_account'],
+                to_account=data['to_account'])
 
             db.session.add(fund_transfer_data)
             db.session.commit()
             result = fund_transfer_schema.dump(fund_transfer_data)
+
+            from_bank_account = BankAccount.query.filter(BankAccount.account_number == data['from_account']).first()
+            if not from_bank_account:
+                raise BankAccountObjectNotFound
+
+            to_bank_account = BankAccount.query.filter(BankAccount.account_number == data['to_account']).first()
+            if not to_bank_account:
+                raise BankAccountObjectNotFound
+
+            transaction_type = TransactionType.query.filter(TransactionType.transaction_type == "debit").first()
+            if not transaction_type:
+                raise TransactionTypeObjectNotFound
+
+            if from_bank_account.account_balance - 1000 - data['transaction_amount'] > 0:
+                from_bank_account.account_balance -= data['transaction_amount']
+                db.session.add(from_bank_account)
+                to_bank_account.account_balance += data['transaction_amount']
+                db.session.add(to_bank_account)
+                transaction_status = "success"
+            else:
+                transaction_status = "failed"
+
+            account_transaction_data = AccountTransactionDetails(
+                transaction_amount=data['transaction_amount'],
+                transaction_status=transaction_status,
+                bank_account_id=from_bank_account.id,
+                transaction_type_id=transaction_type.id,
+                fund_transfer_id=result.get('id'),
+                fund_transfer_info="Funds Transfer"
+            )
+
+            db.session.add(account_transaction_data)
+            db.session.commit()
+            account_transaction_details_schema.dump(account_transaction_data)
+
             logger.info("Response for post request for fund transfer {}".format(result))
-            response = ResponseGenerator(data=result,
-                                         message="Fund transfer record inserted successfully",
-                                         success=True,
-                                         status=HTTPStatus.OK)
+            if transaction_status == 'success':
+                response = ResponseGenerator(data=result,
+                                             message="Fund transfer successfully",
+                                             success=True,
+                                             status=HTTPStatus.OK)
+            else:
+                response = ResponseGenerator(data=result,
+                                             message="Fund transfer declined",
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Fund transfer does not exist")
+
+        except BankAccountObjectNotFound:
+            logger.exception("Bank account details does not exist")
             response = ResponseGenerator(data={},
-                                         message="Fund transfer does not exist",
+                                         message="Bank account details does not exist",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+            return response.error_response()
+
+        except TransactionTypeObjectNotFound:
+            logger.exception("Transaction type does not exist")
+            response = ResponseGenerator(data={},
+                                         message="Transaction type does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -497,17 +603,16 @@ class FundTransferResource(Resource):
         try:
             fund_transfer_data = FundTransfer.query.all()
             if not fund_transfer_data:
-                raise NoResultFound
+                raise FundTransferObjectNotFound
 
             result = funds_transfer_schema.dump(fund_transfer_data)
-
             logger.info("Response for get request for fund transfer list {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Fund transfer list return successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except FundTransferObjectNotFound:
             logger.exception("Fund transfer does not exist")
             response = ResponseGenerator(data={},
                                          message="Fund transfer does not exist",
@@ -535,7 +640,7 @@ class FundTransferResourceId(Resource):
         try:
             fund_transfer_data = FundTransfer.query.filter(FundTransfer.id == fund_transfer_id).first()
             if not fund_transfer_data:
-                raise NoResultFound
+                raise FundTransferObjectNotFound
 
             result = fund_transfer_schema.dump(fund_transfer_data)
 
@@ -545,7 +650,7 @@ class FundTransferResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except FundTransferObjectNotFound:
             logger.exception("Fund transfer with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Fund transfer with this id does not exist",
@@ -582,10 +687,10 @@ class FundTransferResourceId(Resource):
 
             fund_transfer_data = FundTransfer.query.filter(FundTransfer.id == fund_transfer_id).first()
             if not fund_transfer_data:
-                raise NoResultFound
+                raise FundTransferObjectNotFound
 
-            fund_transfer_data.source = data.get('source', fund_transfer_data.source)
-            fund_transfer_data.destination = data.get('destination', fund_transfer_data.destination)
+            fund_transfer_data.from_account = data.get('from_account', fund_transfer_data.from_account)
+            fund_transfer_data.to_account = data.get('to_account', fund_transfer_data.to_account)
 
             db.session.commit()
             result = fund_transfer_schema.dump(fund_transfer_data)
@@ -596,7 +701,7 @@ class FundTransferResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except FundTransferObjectNotFound:
             logger.exception("Fund transfer with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Fund transfer with this id does not exist",
@@ -621,6 +726,9 @@ class FundTransferResourceId(Resource):
          """
         try:
             fund_transfer_data = FundTransfer.query.filter(FundTransfer.id == fund_transfer_id).first()
+            if not fund_transfer_data:
+                raise FundTransferObjectNotFound
+
             db.session.delete(fund_transfer_data)
             db.session.commit()
 
@@ -628,11 +736,33 @@ class FundTransferResourceId(Resource):
                         "Fund transfer with this id deleted successfully")
 
             return "Fund transfer record deleted successfully"
-        except Exception:
+        except FundTransferObjectNotFound:
             logger.exception("Response for delete request for fund transfer:"
                              "Fund transfer with this id does not exist")
             response = ResponseGenerator(data={},
                                          message="Fund transfer with this id does not exist",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+            return response.error_response()
+
+
+class MiniStatementResources(Resource):
+    def get(self):
+        try:
+            mini_statement_data = AccountTransactionDetails.query.order_by(desc(AccountTransactionDetails.id)).limit(10)
+            if not mini_statement_data:
+                raise
+            result = accounts_transaction_details_schema.dump(mini_statement_data)
+            logger.info("Response for get request for account transaction details list of records {}".format(result))
+            response = ResponseGenerator(data=result,
+                                         message="Account transaction details list of records return successfully",
+                                         success=True,
+                                         status=HTTPStatus.OK)
+            return response.success_response()
+        except MiniStatementObjectNotFound:
+            logger.exception("Account transaction details of records does not exist")
+            response = ResponseGenerator(data={},
+                                         message="Account transaction details records does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
