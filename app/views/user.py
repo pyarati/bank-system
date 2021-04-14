@@ -6,8 +6,8 @@ from flask_restplus import Resource
 from app.schemas.user import user_schema, users_schema, user_type_schema, users_type_schema
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
-from sqlalchemy.orm.exc import NoResultFound
 from app.common.custom_exception import UserObjectNotFound, UserTypeObjectNotFound
+
 
 def is_email_id_exists(email_id):
     return User.query.filter(User.email_id == email_id).first() is not None
@@ -125,7 +125,7 @@ class UserResources(Resource):
         try:
             users = User.query.filter(User.is_deleted == 0)
             if users.count() == 0:
-                raise UserObjectNotFound
+                raise UserObjectNotFound("User does not exist")
 
             result = users_schema.dump(users)
 
@@ -135,10 +135,10 @@ class UserResources(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserObjectNotFound:
-            logger.exception("User does not exist")
+        except UserObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="User does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -171,7 +171,7 @@ class UserResourcesId(Resource):
         try:
             user = User.query.filter(User.id == user_id, User.is_deleted == 0).first()
             if not user:
-                raise UserObjectNotFound
+                raise UserObjectNotFound("User with this id does not exist")
 
             result = user_schema.dump(user)
 
@@ -181,10 +181,10 @@ class UserResourcesId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserObjectNotFound:
-            logger.exception("User with this id does not exist")
+        except UserObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="User with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -246,7 +246,7 @@ class UserResourcesId(Resource):
 
             user = User.query.filter(User.id == user_id, User.is_deleted == 0).first()
             if not user:
-                raise UserObjectNotFound
+                raise UserObjectNotFound("User with this id does not exist")
 
             user.first_name = data.get('first_name', user.first_name)
             user.last_name = data.get('last_name', user.last_name)
@@ -265,10 +265,10 @@ class UserResourcesId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserObjectNotFound:
-            logger.exception("User with this id does not exist")
+        except UserObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="User with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -298,7 +298,7 @@ class UserResourcesId(Resource):
         try:
             user = User.query.filter(User.id == user_id, User.is_deleted == 0).first()
             if not user:
-                raise UserObjectNotFound
+                raise UserObjectNotFound("User with this id not valid")
 
             user.is_deleted = 1
             db.session.commit()
@@ -306,10 +306,10 @@ class UserResourcesId(Resource):
             logger.info("Response for delete request for user: User deleted successfully")
 
             return "User with this id deleted successfully"
-        except UserObjectNotFound:
-            logger.exception("Response for delete request for user: User with this id does not exist")
+        except UserObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="User with this id not valid",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -370,7 +370,7 @@ class UserTypeResource(Resource):
         try:
             users_type_data = UserType.query.all()
             if not users_type_data:
-                raise UserTypeObjectNotFound
+                raise UserTypeObjectNotFound("Users type does not exit")
 
             result = users_type_schema.dump(users_type_data)
 
@@ -380,10 +380,10 @@ class UserTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserTypeObjectNotFound:
-            logger.exception("User type does not exist")
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Users type does not exit",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -408,7 +408,7 @@ class UserTypeResourceId(Resource):
         try:
             user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
             if not user_type_data:
-                raise UserTypeObjectNotFound
+                raise UserTypeObjectNotFound("Users type with this id does not exit")
 
             result = user_type_schema.dump(user_type_data)
 
@@ -418,10 +418,10 @@ class UserTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserTypeObjectNotFound:
-            logger.exception("User type with this id does not exist")
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Users type with this id does not exit",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -455,7 +455,7 @@ class UserTypeResourceId(Resource):
 
             user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
             if not user_type_data:
-                raise UserTypeObjectNotFound
+                raise UserTypeObjectNotFound("User type with this id does not exist")
 
             user_type_data.user_type = data.get('user_type', user_type_data.user_type)
             db.session.commit()
@@ -467,10 +467,10 @@ class UserTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserTypeObjectNotFound:
-            logger.exception("User type with this id does not exist")
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Users type not valid",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -493,7 +493,7 @@ class UserTypeResourceId(Resource):
         try:
             user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
             if not UserTypeObjectNotFound:
-                raise UserTypeObjectNotFound
+                raise UserTypeObjectNotFound("Users type with this id does not exist")
 
             db.session.delete(user_type_data)
             db.session.commit()
@@ -501,10 +501,10 @@ class UserTypeResourceId(Resource):
             logger.info("Response for delete request for user type: User type deleted successfully")
 
             return "User type record deleted successfully"
-        except UserTypeObjectNotFound:
-            logger.exception("Response for delete request for user type: User type with this id does not exist")
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Users type with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
