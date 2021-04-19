@@ -6,7 +6,6 @@ from flask_restplus import Resource
 from app.schemas.account import bank_account_schema, bank_accounts_schema, account_type_schema, accounts_type_schema, branch_details_schema, branches_details_schema
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
-from sqlalchemy.orm.exc import NoResultFound
 import random
 from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeObjectNotFound, BranchDetailsObjectNotFound
 
@@ -36,7 +35,7 @@ class BankAccountResource(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -53,10 +52,13 @@ class BankAccountResource(Resource):
                 account_number=account_number,
                 is_active=1,
                 is_deleted=0,
-                account_balance=1000,
+                account_balance=data['account_balance'],
                 user_id=data['user_id'],
                 account_type_id=data['account_type_id'],
                 branch_id=branch_id)
+
+            if bank_account_data.account_balance <= 1000:
+                raise BankAccountObjectNotFound("Minimum balances required while creating account")
 
             db.session.add(bank_account_data)
             db.session.commit()
@@ -67,10 +69,10 @@ class BankAccountResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except BankAccountObjectNotFound:
-            logger.exception("Bank account does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -180,7 +182,7 @@ class BankAccountResourceId(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -272,7 +274,7 @@ class AccountTypeResource(Resource):
             data = request.get_json()
             errors = account_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -389,7 +391,7 @@ class AccountTypeResourceId(Resource):
             data = request.get_json()
             errors = account_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -418,39 +420,6 @@ class AccountTypeResourceId(Resource):
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
 
-    def delete(self, account_type_id):
-        """
-             This is DELETE API
-             Call this api passing a account type id
-             parameters:
-                 account_type: String
-             responses:
-                 404:
-                     description: Account type with this id does not exist
-                 200:
-                     description: Account type with this id deleted successfully
-                     schema:
-                         AccountTypeSchema
-         """
-        try:
-            account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
-            if not account_type_data:
-                raise AccountTypeObjectNotFound("Account type with this id does not exist")
-
-            db.session.delete(account_type_data)
-            db.session.commit()
-
-            logger.info("Response for delete request for account type: Account type deleted successfully")
-
-            return "Account type record deleted successfully"
-        except AccountTypeObjectNotFound as err:
-            logger.exception(err.message)
-            response = ResponseGenerator(data={},
-                                         message=err.message,
-                                         success=False,
-                                         status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
-
 
 class BranchDetailsResource(Resource):
     def post(self):
@@ -471,7 +440,7 @@ class BranchDetailsResource(Resource):
             data = request.get_json()
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -591,7 +560,7 @@ class BranchDetailsResourceId(Resource):
             data = request.get_json()
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,

@@ -44,9 +44,8 @@ class UserResources(Resource):
             # retrieve body data from input JSON
             data = request.get_json()
             errors = user_schema.validate(data, partial=True)
-
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -215,9 +214,8 @@ class UserResourcesId(Resource):
             # retrieve body data from input JSON
             data = request.get_json()
             errors = user_schema.validate(data, partial=True)
-
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -332,6 +330,15 @@ class UserTypeResource(Resource):
         try:
             # retrieve body data from input JSON
             data = request.get_json()
+            errors = user_type_schema.validate(data, partial=True)
+            if errors:
+                logger.error("Missing or sending incorrect data {}".format(errors))
+                response = ResponseGenerator(data={},
+                                             message=errors,
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.error_response()
+
             user_type_data = UserType(
                 user_type=data['user_type'])
 
@@ -446,7 +453,7 @@ class UserTypeResourceId(Resource):
             data = request.get_json()
             errors = user_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -467,40 +474,6 @@ class UserTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserTypeObjectNotFound as err:
-            logger.exception(err.message)
-            response = ResponseGenerator(data={},
-                                         message=err.message,
-                                         success=False,
-                                         status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
-
-    def delete(self, user_type_id):
-        """
-            This is DELETE API
-            Call this api passing a user type id
-            parameters:
-                id:int
-                user_type: string
-            responses:
-                404:
-                    description: User type with this id does not exist
-                200:
-                    description: User type with this id deleted successfully
-                    schema:
-                        UserTypeSchema
-        """
-        try:
-            user_type_data = UserType.query.filter(UserType.id == user_type_id).first()
-            if not UserTypeObjectNotFound:
-                raise UserTypeObjectNotFound("Users type with this id does not exist")
-
-            db.session.delete(user_type_data)
-            db.session.commit()
-
-            logger.info("Response for delete request for user type: User type deleted successfully")
-
-            return "User type record deleted successfully"
         except UserTypeObjectNotFound as err:
             logger.exception(err.message)
             response = ResponseGenerator(data={},

@@ -8,7 +8,7 @@ class BankAccountSchema(ma.Schema):
     account_number = fields.String(required=True, validate=Length(equal=8))
     is_active = fields.Integer()
     is_deleted = fields.Integer()
-    account_balance = fields.Integer()
+    account_balance = fields.Integer(required=True)
     user_id = fields.Integer(required=True)
     branch_id = fields.Integer(required=True)
     account_type_id = fields.Integer(required=True)
