@@ -6,8 +6,8 @@ from flask_restplus import Resource
 from app.schemas.account import bank_account_schema, bank_accounts_schema, account_type_schema, accounts_type_schema, branch_details_schema, branches_details_schema
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
-from sqlalchemy.orm.exc import NoResultFound
 import random
+from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeObjectNotFound, BranchDetailsObjectNotFound
 
 
 class BankAccountResource(Resource):
@@ -16,13 +16,15 @@ class BankAccountResource(Resource):
              This is POST API
              Create a new bank account
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
+                 404:
+                     description: Bank account does not exits
                  200:
                      description: Bank account record inserted successfully
                      schema:
@@ -33,7 +35,7 @@ class BankAccountResource(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -50,9 +52,13 @@ class BankAccountResource(Resource):
                 account_number=account_number,
                 is_active=1,
                 is_deleted=0,
+                account_balance=data['account_balance'],
                 user_id=data['user_id'],
                 account_type_id=data['account_type_id'],
                 branch_id=branch_id)
+
+            if bank_account_data.account_balance <= 1000:
+                raise BankAccountObjectNotFound("Minimum balances required while creating account")
 
             db.session.add(bank_account_data)
             db.session.commit()
@@ -63,10 +69,10 @@ class BankAccountResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Bank account does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -75,15 +81,15 @@ class BankAccountResource(Resource):
         """
              This is GET API
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account does not exist
+                     description: Bank account does not exist
                  200:
                      description: Bank account list return successfully
                      schema:
@@ -92,7 +98,7 @@ class BankAccountResource(Resource):
         try:
             bank_account_data = BankAccount.query.filter(BankAccount.is_deleted == 0)
             if bank_account_data.count() == 0:
-                raise NoResultFound
+                raise BankAccountObjectNotFound("Bank account does not exist")
 
             result = bank_accounts_schema.dump(bank_account_data)
 
@@ -102,10 +108,10 @@ class BankAccountResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Bank account does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -117,15 +123,15 @@ class BankAccountResourceId(Resource):
              This is GET API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
                      description: Bank account with this id return successfully
                      schema:
@@ -135,20 +141,19 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound("Bank account does not exist")
 
             result = bank_account_schema.dump(bank_account_data)
-
             logger.info("Response for get request for bank account list {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Bank account list return successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Bank account does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -158,17 +163,17 @@ class BankAccountResourceId(Resource):
              This is PUT API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
-                     description: Bank account with this id return successfully
+                     description: Bank account with this id updated successfully
                      schema:
                          BankAccountSchema
          """
@@ -177,7 +182,7 @@ class BankAccountResourceId(Resource):
             data = request.get_json()
             errors = bank_account_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -187,7 +192,7 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound("Bank account with this id does not exist")
 
             bank_account_data.user_id = data.get('user_id', bank_account_data.user_id)
             bank_account_data.branch_id = data.get('branch_id', bank_account_data.branch_id)
@@ -203,10 +208,10 @@ class BankAccountResourceId(Resource):
                                          status=HTTPStatus.OK)
             return response.success_response()
 
-        except NoResultFound:
-            logger.exception("Bank account with this id does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -216,17 +221,17 @@ class BankAccountResourceId(Resource):
              This is DELETE API
              Call this api passing a bank account id
              parameters:
-                account_number: Integer
-                is_active: Integer
-                is_deleted: Integer
-                user_id: Integer
-                account_type_id: Integer
-                branch_id: Integer
+                 account_number: Integer
+                 is_active: Integer
+                 is_deleted: Integer
+                 user_id: Integer
+                 account_type_id: Integer
+                 branch_id: Integer
              responses:
                  404:
-                    description: Bank account with this id does not exist
+                     description: Bank account with this id does not exist
                  200:
-                     description: Bank account with this id return successfully
+                     description: Bank account with this id deleted successfully
                      schema:
                          BankAccountSchema
          """
@@ -234,7 +239,7 @@ class BankAccountResourceId(Resource):
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id,
                                                          BankAccount.is_deleted == 0).first()
             if not bank_account_data:
-                raise NoResultFound
+                raise BankAccountObjectNotFound("Bank account with this id does not exit")
 
             bank_account_data.is_deleted = 1
             db.session.commit()
@@ -242,10 +247,10 @@ class BankAccountResourceId(Resource):
             logger.info("Response for delete request for user: Bank account deleted successfully")
 
             return "Bank account with this id deleted successfully"
-        except NoResultFound:
-            logger.exception("Response for delete request for bank account: Bank account with this id does not exist")
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Bank account with this id does not exit",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -256,10 +261,12 @@ class AccountTypeResource(Resource):
         """
              This is POST API
              parameters:
-                account_type: String
+                 account_type: String
              responses:
+                 404:
+                     description: Account type does not exist
                  200:
-                     description: account type list inserted successfully
+                     description: Account type record inserted successfully
                      schema:
                          AccountTypeSchema
          """
@@ -267,7 +274,7 @@ class AccountTypeResource(Resource):
             data = request.get_json()
             errors = account_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -286,7 +293,7 @@ class AccountTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except AccountTypeObjectNotFound:
             logger.exception("Account type does not exist")
             response = ResponseGenerator(data={},
                                          message="Account type does not exist",
@@ -298,19 +305,19 @@ class AccountTypeResource(Resource):
         """
              This is GET API
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type does not exist
+                     description: Account type does not exist
                  200:
-                     description: account type list return successfully
+                     description: Account type list return successfully
                      schema:
                          AccountTypeSchema
          """
         try:
             account_type_data = AccountType.query.all()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound("Account type does not exist")
 
             result = accounts_type_schema.dump(account_type_data)
 
@@ -320,10 +327,10 @@ class AccountTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Account type does not exist")
+        except AccountTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Account type does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -335,19 +342,19 @@ class AccountTypeResourceId(Resource):
              This is GET API
              Call this api passing a account type id
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type with this id does not exist
+                     description: Account type with this id does not exist
                  200:
-                     description: account type with this id return successfully
+                     description: Account type with this id return successfully
                      schema:
                          AccountTypeSchema
          """
         try:
             account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound("Account type with this id does not exist")
 
             result = account_type_schema.dump(account_type_data)
 
@@ -357,10 +364,10 @@ class AccountTypeResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Account type with this id does not exist")
+        except AccountTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Account type with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -370,12 +377,12 @@ class AccountTypeResourceId(Resource):
              This is PUT API
              Call this api passing a account type id
              parameters:
-                account_type: String
+                 account_type: String
              responses:
                  404:
-                    description: account type with this id does not exist
+                     description: Account type with this id does not exist
                  200:
-                     description: account type with this id updated successfully
+                     description: Account type with this id updated successfully
                      schema:
                          AccountTypeSchema
          """
@@ -384,7 +391,7 @@ class AccountTypeResourceId(Resource):
             data = request.get_json()
             errors = account_type_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -393,52 +400,22 @@ class AccountTypeResourceId(Resource):
 
             account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
             if not account_type_data:
-                raise NoResultFound
+                raise AccountTypeObjectNotFound("Account type with this id does not exist")
 
             account_type_data.account_type = data.get('account_type', account_type_data.account_type)
             db.session.commit()
             result = account_type_schema.dump(account_type_data)
 
-            logger.info("Response for put with id request for user type {}".format(result))
+            logger.info("Response for put with id request for account type {}".format(result))
             response = ResponseGenerator(data=result,
                                          message="Account type with this id updated successfully",
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Account type with this id does not exist")
+        except AccountTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Account type with this id does not exist",
-                                         success=False,
-                                         status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
-
-    def delete(self, account_type_id):
-        """
-             This is DELETE API
-             Call this api passing a account type id
-             parameters:
-                account_type: String
-             responses:
-                 404:
-                    description: account type with this id does not exist
-                 200:
-                     description: account type with this id deleted successfully
-                     schema:
-                         AccountTypeSchema
-         """
-        try:
-            account_type_data = AccountType.query.filter(AccountType.id == account_type_id).first()
-            db.session.delete(account_type_data)
-            db.session.commit()
-
-            logger.info("Response for delete request for account type: Account type deleted successfully")
-
-            return "Account type record deleted successfully"
-        except Exception:
-            logger.exception("Response for delete request for account type: Account type with this id does not exist")
-            response = ResponseGenerator(data={},
-                                         message="Account type with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -449,9 +426,11 @@ class BranchDetailsResource(Resource):
         """
              This is POST API
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
+                 404:
+                     description: Branch details does not exist
                  200:
                      description: Branch details record inserted successfully
                      schema:
@@ -461,7 +440,7 @@ class BranchDetailsResource(Resource):
             data = request.get_json()
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity")
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -480,7 +459,7 @@ class BranchDetailsResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
+        except BranchDetailsObjectNotFound:
             logger.exception("Branch details does not exist")
             response = ResponseGenerator(data={},
                                          message="Branch details does not exist",
@@ -492,11 +471,11 @@ class BranchDetailsResource(Resource):
         """
              This is GET API
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details does not exist
+                     description: Branch details does not exist
                  200:
                      description: Branch details list return successfully
                      schema:
@@ -505,7 +484,7 @@ class BranchDetailsResource(Resource):
         try:
             branch_details_data = BranchDetails.query.all()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound("Branch details does not exist")
 
             result = branches_details_schema.dump(branch_details_data)
 
@@ -515,10 +494,10 @@ class BranchDetailsResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Branch details does not exist")
+        except BranchDetailsObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Branch details does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -530,11 +509,11 @@ class BranchDetailsResourceId(Resource):
              This is GET API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id return successfully
                      schema:
@@ -543,7 +522,7 @@ class BranchDetailsResourceId(Resource):
         try:
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound("Branch details with this id does not exist")
 
             result = branch_details_schema.dump(branch_details_data)
 
@@ -553,10 +532,10 @@ class BranchDetailsResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Branch details id with this id does not exist")
+        except BranchDetailsObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Branch details with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -566,11 +545,11 @@ class BranchDetailsResourceId(Resource):
              This is PUT API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id updated successfully
                      schema:
@@ -581,7 +560,7 @@ class BranchDetailsResourceId(Resource):
             data = request.get_json()
             errors = branch_details_schema.validate(data, partial=True)
             if errors:
-                logger.error("Missing or sending incorrect data to create an activity {}".format(errors))
+                logger.error("Missing or sending incorrect data {}".format(errors))
                 response = ResponseGenerator(data={},
                                              message=errors,
                                              success=False,
@@ -590,7 +569,7 @@ class BranchDetailsResourceId(Resource):
 
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
             if not branch_details_data:
-                raise NoResultFound
+                raise BranchDetailsObjectNotFound("Branch details with this id does not exist")
 
             branch_details_data.branch_address = data.get('branch_address', branch_details_data.branch_address)
             db.session.commit()
@@ -602,10 +581,10 @@ class BranchDetailsResourceId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Branch details with this id does not exist")
+        except BranchDetailsObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Branch details with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
@@ -615,11 +594,11 @@ class BranchDetailsResourceId(Resource):
              This is DELETE API
              Call this api passing a branch details id
              parameters:
-                branch_code: String
-                branch_address: String
+                 branch_code: String
+                 branch_address: String
              responses:
                  404:
-                    description: Branch details with this id does not exist
+                     description: Branch details with this id does not exist
                  200:
                      description: Branch details with this id deleted successfully
                      schema:
@@ -627,6 +606,9 @@ class BranchDetailsResourceId(Resource):
          """
         try:
             branch_details_data = BranchDetails.query.filter(BranchDetails.id == branch_details_id).first()
+            if not branch_details_data:
+                raise BranchDetailsObjectNotFound("Branch details with this id does not exist")
+
             db.session.delete(branch_details_data)
             db.session.commit()
 
@@ -634,11 +616,10 @@ class BranchDetailsResourceId(Resource):
                         "Branch details with this id deleted successfully")
 
             return "Branch details record deleted successfully"
-        except Exception:
-            logger.exception("Response for delete request for branch details:"
-                             "Branch details with this id does not exist")
+        except BranchDetailsObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Branch details with this id does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
             return response.error_response()
