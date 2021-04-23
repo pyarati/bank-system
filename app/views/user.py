@@ -72,6 +72,11 @@ class UserResources(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
+            # get user type details
+            user_type = UserType.query.filter(UserType.id == data['user_type_id']).first()
+            if not user_type:
+                raise UserTypeObjectNotFound("Invalid user Type id")
+
             user_data = User(
                 first_name=data['first_name'],
                 last_name=data['last_name'],
@@ -98,7 +103,20 @@ class UserResources(Resource):
                                          message="User does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
+            response = ResponseGenerator(data={},
+                                         message=err.message,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -140,7 +158,14 @@ class UserResources(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class UserResourcesId(Resource):
@@ -186,7 +211,14 @@ class UserResourcesId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def put(self, user_id):
         """
@@ -269,7 +301,14 @@ class UserResourcesId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def delete(self, user_id):
         """
@@ -310,7 +349,14 @@ class UserResourcesId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class UserTypeResource(Resource):
@@ -342,6 +388,9 @@ class UserTypeResource(Resource):
             user_type_data = UserType(
                 user_type=data['user_type'])
 
+            if user_type_data.user_type.lower() not in ["customer", "admin", "other"]:
+                raise UserTypeObjectNotFound
+
             db.session.add(user_type_data)
             db.session.commit()
             result = user_type_schema.dump(user_type_data)
@@ -358,7 +407,14 @@ class UserTypeResource(Resource):
                                          message="User type does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -393,7 +449,14 @@ class UserTypeResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class UserTypeResourceId(Resource):
@@ -431,7 +494,14 @@ class UserTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def put(self, user_type_id):
         """
@@ -480,4 +550,11 @@ class UserTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()

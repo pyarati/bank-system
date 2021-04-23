@@ -4,11 +4,14 @@ from app.models.account import BankAccount, BranchDetails, AccountType
 from flask import request
 from flask_restplus import Resource
 from app.schemas.account import bank_account_schema, bank_accounts_schema, account_type_schema, accounts_type_schema, branch_details_schema, branches_details_schema
+from app.schemas.transaction import fund_transfer_schema
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
 import random
-from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeObjectNotFound, BranchDetailsObjectNotFound
-
+from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeObjectNotFound, BranchDetailsObjectNotFound, TransactionTypeObjectNotFound, UserObjectNotFound
+from app.views.transaction import AccountTransactionDetails, FundTransfer, TransactionType
+from app.schemas.transaction import account_transaction_details_schema
+from app.views.user import User
 
 class BankAccountResource(Resource):
     def post(self):
@@ -42,6 +45,16 @@ class BankAccountResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
+            # get user details
+            user = User.query.filter(User.id == data['user_id']).first()
+            if not user:
+                raise UserObjectNotFound("Invalid user id")
+
+            # get account type details
+            account_type = AccountType.query.filter(AccountType.id == data['account_type_id']).first()
+            if not account_type:
+                raise AccountTypeObjectNotFound("Invalid account Type id")
+
             branch_id = data['branch_id']
             zero_filled_number = str(branch_id)
             branch_id = zero_filled_number.zfill(3)
@@ -62,6 +75,34 @@ class BankAccountResource(Resource):
 
             db.session.add(bank_account_data)
             db.session.commit()
+
+            # fund transfer type - funds added
+            fund_transfer_data = FundTransfer(
+                from_account=bank_account_data.account_number,
+                to_account=None
+            )
+            db.session.add(fund_transfer_data)
+            db.session.commit()
+            result = fund_transfer_schema.dump(fund_transfer_data)
+
+            transaction_type = TransactionType.query.filter(TransactionType.transaction_type == "credit").first()
+            if not transaction_type:
+                raise TransactionTypeObjectNotFound("Transaction type does not exist")
+
+            # create account transaction
+            bank_account_transaction = AccountTransactionDetails(
+                transaction_amount=bank_account_data.account_balance,
+                transaction_status="success",
+                bank_account_id=bank_account_data.id,
+                transaction_type_id=transaction_type.id,
+                fund_transfer_id=result.get('id'),
+                fund_transfer_info="Fund added"
+            )
+
+            db.session.add(bank_account_transaction)
+            db.session.commit()
+            account_transaction_details_schema.dump(bank_account_transaction)
+
             result = bank_account_schema.dump(bank_account_data)
             logger.info("Response for get request for bank account list {}".format(result))
             response = ResponseGenerator(data=result,
@@ -75,7 +116,26 @@ class BankAccountResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except TransactionTypeObjectNotFound as err:
+            logger.exception(err.message)
+            response = ResponseGenerator(data={},
+                                         message=err.message,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+        except AccountTypeObjectNotFound as err:
+            logger.exception(err.message)
+            response = ResponseGenerator(data={},
+                                         message=err.message,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -114,7 +174,14 @@ class BankAccountResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class BankAccountResourceId(Resource):
@@ -156,7 +223,14 @@ class BankAccountResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def put(self, bank_account_id):
         """
@@ -214,7 +288,14 @@ class BankAccountResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message="Invalid Request",
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def delete(self, bank_account_id):
         """
@@ -253,7 +334,14 @@ class BankAccountResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class AccountTypeResource(Resource):
@@ -284,6 +372,9 @@ class AccountTypeResource(Resource):
             account_type_data = AccountType(
                 account_type=data['account_type'])
 
+            if account_type_data.account_type.lower() not in ["saving", "current"]:
+                raise AccountTypeObjectNotFound
+
             db.session.add(account_type_data)
             db.session.commit()
             result = account_type_schema.dump(account_type_data)
@@ -299,7 +390,14 @@ class AccountTypeResource(Resource):
                                          message="Account type does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -333,7 +431,14 @@ class AccountTypeResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class AccountTypeResourceId(Resource):
@@ -370,7 +475,14 @@ class AccountTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def put(self, account_type_id):
         """
@@ -418,7 +530,14 @@ class AccountTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class BranchDetailsResource(Resource):
@@ -465,7 +584,14 @@ class BranchDetailsResource(Resource):
                                          message="Branch details does not exist",
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -500,7 +626,14 @@ class BranchDetailsResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
 
 class BranchDetailsResourceId(Resource):
@@ -538,7 +671,14 @@ class BranchDetailsResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def put(self, branch_details_id):
         """
@@ -587,7 +727,14 @@ class BranchDetailsResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()
 
     def delete(self, branch_details_id):
         """
@@ -622,4 +769,11 @@ class BranchDetailsResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
+
+        return response.error_response()

@@ -4,16 +4,17 @@ from marshmallow.validate import Length, Range, Regexp
 
 
 string_mobile_number = "[7-9][0-9]{9}"
-string_email_id = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$"
+string_email_id = "^[a-zA-Z0-9]+[\._]?[a-zA-Z0-9]+[@]\w+[.]\w{2,3}$"
 string_password = "^[a-zA-Z0-9!@#\$%\^\&*_=+-]{8,12}$"
+string_pattern = "^[a-zA-Z]*$"
 
 
 # Define schema for user
 class UserSchema(ma.Schema):
     id = fields.Integer(required=True)
-    first_name = fields.String(required=True, validate=Length(min=4, max=250))
-    last_name = fields.String(required=True, validate=Length(min=4, max=250))
-    address = fields.String(required=True, validate=Length(min=3, max=250))
+    first_name = fields.String(required=True, validate=(Length(min=4, max=250), Regexp(string_pattern)))
+    last_name = fields.String(required=True, validate=(Length(min=4, max=250), Regexp(string_pattern)))
+    address = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
     mobile_number = fields.String(required=True, validate=Regexp(string_mobile_number))
     email_id = fields.Email(required=True, validate=Regexp(string_email_id))
     password = fields.String(required=True, validate=Regexp(string_password))
@@ -32,7 +33,7 @@ users_schema = UserSchema(load_only=load_only, many=True)
 # Define schema for user type
 class UserTypeSchema(ma.Schema):
     id = fields.Integer(required=True)
-    user_type = fields.String(required=True, validate=Length(min=3, max=250))
+    user_type = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
 
     class Meta:
         fields = ("id", "user_type")

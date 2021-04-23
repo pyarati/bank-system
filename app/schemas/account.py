@@ -1,6 +1,8 @@
 from marshmallow import fields
 from app import ma
-from marshmallow.validate import Length
+from marshmallow.validate import Length, Regexp
+
+string_pattern = "^[a-zA-Z]*$"
 
 
 class BankAccountSchema(ma.Schema):
@@ -23,7 +25,7 @@ bank_accounts_schema = BankAccountSchema(many=True)
 
 class AccountTypeSchema(ma.Schema):
     id = fields.Integer(required=True)
-    account_type = fields.String(required=True, validate=Length(min=3, max=250))
+    account_type = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
 
     class Meta:
         fields = ("id", "account_type")
@@ -35,7 +37,7 @@ accounts_type_schema = AccountTypeSchema(many=True)
 
 class BranchDetailsSchema(ma.Schema):
     id = fields.Integer(required=True)
-    branch_address = fields.String(required=True, validate=Length(min=3, max=250))
+    branch_address = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
 
     class Meta:
         fields = ("id", "branch_address")
