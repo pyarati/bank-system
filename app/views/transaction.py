@@ -1,8 +1,7 @@
 from http import HTTPStatus
 from flask import request
 from flask_restplus import Resource
-from sqlalchemy import desc, asc
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import desc
 from app import db
 from app.common.custom_exception import BankAccountObjectNotFound, TransactionTypeObjectNotFound, \
     AccountTransactionDetailsObjectNotFound, FundTransferObjectNotFound, MiniStatementObjectNotFound
@@ -122,9 +121,9 @@ class AccountTransactionDetailsResource(Resource):
         except Exception as err:
             logger.exception(err)
             response = ResponseGenerator(data={},
-                                         message="Invalid Request",
+                                         message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -165,7 +164,14 @@ class AccountTransactionDetailsResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class AccountTransactionDetailsResourceBankId(Resource):
@@ -194,6 +200,8 @@ class AccountTransactionDetailsResourceBankId(Resource):
 
             bank_account_data = AccountTransactionDetails.query.filter(
                 AccountTransactionDetails.bank_account_id == bank_account_id).all()
+            if not bank_account_data:
+                raise AccountTransactionDetailsObjectNotFound("Transaction with this bank account not found")
 
             result = accounts_transaction_details_schema.dump(bank_account_data)
 
@@ -203,13 +211,26 @@ class AccountTransactionDetailsResourceBankId(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
+        except BankAccountObjectNotFound as err:
+            logger.exception(err.message)
+            response = ResponseGenerator(data={},
+                                         message=err.message,
+                                         success=False,
+                                         status=HTTPStatus.NOT_FOUND)
         except AccountTransactionDetailsObjectNotFound as err:
             logger.exception(err.message)
             response = ResponseGenerator(data={},
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class AccountTransactionDetailsResourceId(Resource):
@@ -275,7 +296,14 @@ class AccountTransactionDetailsResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class TransactionTypeResource(Resource):
@@ -306,6 +334,9 @@ class TransactionTypeResource(Resource):
             transaction_type_data = TransactionType(
                 transaction_type=data['transaction_type'])
 
+            if transaction_type_data.transaction_type.lower() not in ["credit", "debit"]:
+                raise TransactionTypeObjectNotFound("Transaction type does not exist")
+
             db.session.add(transaction_type_data)
             db.session.commit()
             result = transaction_type_schema.dump(transaction_type_data)
@@ -315,13 +346,20 @@ class TransactionTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except NoResultFound:
-            logger.exception("Transaction type does not exist")
+        except TransactionTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="Transaction type does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -354,7 +392,14 @@ class TransactionTypeResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class TransactionTypeResourceId(Resource):
@@ -391,7 +436,14 @@ class TransactionTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
     def put(self, transaction_type_id):
         """
@@ -440,7 +492,14 @@ class TransactionTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
     def delete(self, transaction_type_id):
         """
@@ -474,7 +533,14 @@ class TransactionTypeResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class FundTransferResource(Resource):
@@ -584,15 +650,20 @@ class FundTransferResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
-
         except TransactionTypeObjectNotFound as err:
             logger.exception(err.message)
             response = ResponseGenerator(data={},
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
     def get(self):
         """
@@ -626,7 +697,14 @@ class FundTransferResource(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class FundTransferResourceId(Resource):
@@ -664,7 +742,14 @@ class FundTransferResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
     def put(self, fund_transfer_id):
         """
@@ -715,7 +800,14 @@ class FundTransferResourceId(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
 
 
 class MiniStatementResources(Resource):
@@ -742,4 +834,11 @@ class MiniStatementResources(Resource):
                                          message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
-            return response.error_response()
+        except Exception as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.BAD_REQUEST)
+
+        return response.error_response()
