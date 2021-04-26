@@ -123,7 +123,7 @@ class AccountTransactionDetailsResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -169,7 +169,7 @@ class AccountTransactionDetailsResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -228,7 +228,7 @@ class AccountTransactionDetailsResourceBankId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -301,7 +301,7 @@ class AccountTransactionDetailsResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -357,7 +357,7 @@ class TransactionTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -397,7 +397,7 @@ class TransactionTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -441,7 +441,7 @@ class TransactionTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -497,7 +497,7 @@ class TransactionTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -538,7 +538,7 @@ class TransactionTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -661,7 +661,7 @@ class FundTransferResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -702,7 +702,7 @@ class FundTransferResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -747,7 +747,7 @@ class FundTransferResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -805,7 +805,7 @@ class FundTransferResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -839,6 +839,6 @@ class MiniStatementResources(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()

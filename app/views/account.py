@@ -133,7 +133,7 @@ class BankAccountResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -179,7 +179,7 @@ class BankAccountResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -228,7 +228,7 @@ class BankAccountResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -293,7 +293,7 @@ class BankAccountResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message="Invalid Request",
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -339,7 +339,7 @@ class BankAccountResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -395,7 +395,7 @@ class AccountTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -436,7 +436,7 @@ class AccountTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -480,7 +480,7 @@ class AccountTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -535,7 +535,7 @@ class AccountTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -589,7 +589,7 @@ class BranchDetailsResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -631,7 +631,7 @@ class BranchDetailsResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -676,7 +676,7 @@ class BranchDetailsResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -732,7 +732,7 @@ class BranchDetailsResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -774,6 +774,6 @@ class BranchDetailsResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()

@@ -114,7 +114,7 @@ class UserResources(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -163,7 +163,7 @@ class UserResources(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -216,7 +216,7 @@ class UserResourcesId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -306,7 +306,7 @@ class UserResourcesId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -354,7 +354,7 @@ class UserResourcesId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -412,7 +412,7 @@ class UserTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -454,7 +454,7 @@ class UserTypeResource(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -499,7 +499,7 @@ class UserTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
 
@@ -555,6 +555,6 @@ class UserTypeResourceId(Resource):
             response = ResponseGenerator(data={},
                                          message=err,
                                          success=False,
-                                         status=HTTPStatus.NOT_FOUND)
+                                         status=HTTPStatus.BAD_REQUEST)
 
         return response.error_response()
