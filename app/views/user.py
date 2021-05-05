@@ -7,6 +7,32 @@ from app.schemas.user import user_schema, users_schema, user_type_schema, users_
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
 from app.common.custom_exception import UserObjectNotFound, UserTypeObjectNotFound
+from flask_jwt_extended import jwt_required, decode_token
+import bcrypt
+from functools import wraps
+from flask_jwt_extended.exceptions import NoAuthorizationError
+from sqlalchemy.exc import IntegrityError
+
+
+def custom_validator(view_function):
+    @wraps(view_function)
+    def wrapper(*args, **kwargs):
+        jwt_data = decode_token(encoded_token='access_token')
+
+        # Do your custom validation here.
+        try:
+            if not jwt_data:
+                raise NoAuthorizationError("Token invalid")
+
+        except NoAuthorizationError as err:
+            logger.exception(err)
+            response = ResponseGenerator(data={},
+                                         message=err,
+                                         success=False,
+                                         status=HTTPStatus.UNAUTHORIZED)
+            return response.error_response()
+        return view_function(*args, **kwargs)
+    return jwt_required(wrapper)
 
 
 def is_email_id_exists(email_id):
@@ -77,15 +103,22 @@ class UserResources(Resource):
             if not user_type:
                 raise UserTypeObjectNotFound("Invalid user Type id")
 
-            user_data = User(
-                first_name=data['first_name'],
-                last_name=data['last_name'],
-                address=data['address'],
-                mobile_number=data['mobile_number'],
-                email_id=data['email_id'],
-                password=data['password'],
-                is_deleted=0,
-                user_type_id=data['user_type_id'])
+            try:
+                user_data = User(
+                    first_name=data['first_name'],
+                    last_name=data['last_name'],
+                    address=data['address'],
+                    mobile_number=data['mobile_number'],
+                    email_id=data['email_id'],
+                    password=bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()),
+                    is_deleted=0,
+                    user_type_id=data['user_type_id'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(user_data)
             db.session.commit()
@@ -97,6 +130,7 @@ class UserResources(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
+
         except UserObjectNotFound:
             logger.exception("User does not exist")
             response = ResponseGenerator(data={},
@@ -278,12 +312,14 @@ class UserResourcesId(Resource):
             if not user:
                 raise UserObjectNotFound("User with this id does not exist")
 
+            hashed = bcrypt.hashpw(data.get('password', user.password).encode('utf-8'), bcrypt.gensalt())
+
             user.first_name = data.get('first_name', user.first_name)
             user.last_name = data.get('last_name', user.last_name)
             user.address = data.get('address', user.address)
             user.mobile_number = data.get('mobile_number', user.mobile_number)
             user.email_id = data.get('email_id', user.email_id)
-            user.password = data.get('password', user.password)
+            user.password = hashed
             user.user_type_id = data.get('user_type_id', user.user_type_id)
 
             db.session.commit()
@@ -384,12 +420,18 @@ class UserTypeResource(Resource):
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
-
-            user_type_data = UserType(
-                user_type=data['user_type'])
+            try:
+                user_type_data = UserType(
+                    user_type=data['user_type'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             if user_type_data.user_type.lower() not in ["customer", "admin", "other"]:
-                raise UserTypeObjectNotFound
+                raise UserTypeObjectNotFound("Please insert correct user type")
 
             db.session.add(user_type_data)
             db.session.commit()
@@ -401,10 +443,10 @@ class UserTypeResource(Resource):
                                          success=True,
                                          status=HTTPStatus.OK)
             return response.success_response()
-        except UserTypeObjectNotFound:
-            logger.exception("User type does not exist")
+        except UserTypeObjectNotFound as err:
+            logger.exception(err.message)
             response = ResponseGenerator(data={},
-                                         message="User type does not exist",
+                                         message=err.message,
                                          success=False,
                                          status=HTTPStatus.NOT_FOUND)
         except Exception as err:

@@ -80,15 +80,22 @@ class AccountTransactionDetailsResource(Resource):
             db.session.commit()
             fund_transfer = fund_transfer_schema.dump(fund_transfer_data)
 
-            # create account transaction
-            bank_account_data = AccountTransactionDetails(
-                transaction_amount=data['transaction_amount'],
-                transaction_status=transaction_status,
-                bank_account_id=data['bank_account_id'],
-                transaction_type_id=data['transaction_type_id'],
-                fund_transfer_id=fund_transfer.get('id'),
-                fund_transfer_info=data['fund_transfer_info']
-            )
+            try:
+                # create account transaction
+                bank_account_data = AccountTransactionDetails(
+                    transaction_amount=data['transaction_amount'],
+                    transaction_status=transaction_status,
+                    bank_account_id=data['bank_account_id'],
+                    transaction_type_id=data['transaction_type_id'],
+                    fund_transfer_id=fund_transfer.get('id'),
+                    fund_transfer_info=data['fund_transfer_info']
+                )
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(bank_account_data)
             db.session.commit()
@@ -331,8 +338,15 @@ class TransactionTypeResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
-            transaction_type_data = TransactionType(
-                transaction_type=data['transaction_type'])
+            try:
+                transaction_type_data = TransactionType(
+                    transaction_type=data['transaction_type'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             if transaction_type_data.transaction_type.lower() not in ["credit", "debit"]:
                 raise TransactionTypeObjectNotFound("Transaction type does not exist")
@@ -569,10 +583,17 @@ class FundTransferResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
-            # fund transfer type - funds transfer
-            fund_transfer_data = FundTransfer(
-                from_account=data['from_account'],
-                to_account=data['to_account'])
+            try:
+                # fund transfer type - funds transfer
+                fund_transfer_data = FundTransfer(
+                    from_account=data['from_account'],
+                    to_account=data['to_account'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(fund_transfer_data)
             db.session.commit()

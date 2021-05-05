@@ -11,7 +11,7 @@ string_pattern = "^[a-zA-Z]*$"
 
 # Define schema for user
 class UserSchema(ma.Schema):
-    id = fields.Integer(required=True)
+    id = fields.Integer(required=True, strict=True)
     first_name = fields.String(required=True, validate=(Length(min=4, max=250), Regexp(string_pattern)))
     last_name = fields.String(required=True, validate=(Length(min=4, max=250), Regexp(string_pattern)))
     address = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
@@ -19,10 +19,10 @@ class UserSchema(ma.Schema):
     email_id = fields.Email(required=True, validate=Regexp(string_email_id))
     password = fields.String(required=True, validate=Regexp(string_password))
     is_deleted = fields.Integer()
-    user_type_id = fields.Integer(required=True, validate=Range(min=1))
+    user_type_id = fields.Integer(required=True, validate=Range(min=1), strict=True)
 
     class Meta:
-        fields = ("id", "first_name", "last_name", "address", "mobile_number", "email_id", "password", "user_type_id")
+        fields = ("id", "first_name", "last_name", "address", "mobile_number", "email_id", "password", "created_at", "user_type_id")
 
 
 load_only = ["password", "is_deleted", "user_type_id"]
@@ -32,7 +32,7 @@ users_schema = UserSchema(load_only=load_only, many=True)
 
 # Define schema for user type
 class UserTypeSchema(ma.Schema):
-    id = fields.Integer(required=True)
+    id = fields.Integer(required=True, strict=True)
     user_type = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
 
     class Meta:

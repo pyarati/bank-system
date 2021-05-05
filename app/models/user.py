@@ -6,10 +6,10 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50), unique=False, nullable=False)
     last_name = db.Column(db.String(50), unique=False, nullable=False)
-    address = db.Column(db.String(50), unique=False, nullable=False)
+    address = db.Column(db.String(120), unique=False, nullable=False)
     mobile_number = db.Column(db.String(10), unique=True, nullable=False)
-    email_id = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(50), unique=False, nullable=False)
+    email_id = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(256), unique=False, nullable=False)
     is_deleted = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
