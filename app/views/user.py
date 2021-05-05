@@ -11,7 +11,6 @@ from flask_jwt_extended import jwt_required, decode_token
 import bcrypt
 from functools import wraps
 from flask_jwt_extended.exceptions import NoAuthorizationError
-from sqlalchemy.exc import IntegrityError
 
 
 def custom_validator(view_function):
