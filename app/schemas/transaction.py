@@ -6,11 +6,11 @@ string_pattern = "^[a-zA-Z ]*$"
 
 
 class AccountTransactionDetailsSchema(ma.Schema):
-    id = fields.Integer(required=True)
-    transaction_amount = fields.Integer(required=True)
+    id = fields.Integer(required=True, strict=True)
+    transaction_amount = fields.Integer(required=True, strict=True)
     transaction_status = fields.String(required=True)
-    bank_account_id = fields.Integer(required=True)
-    transaction_type_id = fields.Integer(required=True)
+    bank_account_id = fields.Integer(required=True, strict=True)
+    transaction_type_id = fields.Integer(required=True, strict=True)
     fund_transfer_id = fields.Integer(required=False)
     fund_transfer_info = fields.String(required=False, validate=Regexp(string_pattern))
 
@@ -26,7 +26,7 @@ accounts_transaction_details_schema = AccountTransactionDetailsSchema(many=True)
 
 
 class TransactionTypeSchema(ma.Schema):
-    id = fields.Integer(required=True)
+    id = fields.Integer(required=True, strict=True)
     transaction_type = fields.String(required=True, validate=(Length(min=3, max=250), Regexp(string_pattern)))
 
     class Meta:
@@ -38,7 +38,7 @@ transactions_type_schema = TransactionTypeSchema(many=True)
 
 
 class FundTransferSchema(ma.Schema):
-    id = fields.Integer(required=True)
+    id = fields.Integer(required=True, strict=True)
     from_account = fields.String(required=True, validate=Length(equal=8))
     to_account = fields.String(required=True, validate=Length(equal=8))
     transaction_amount = fields.Integer()

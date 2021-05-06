@@ -13,6 +13,7 @@ from app.views.transaction import AccountTransactionDetails, FundTransfer, Trans
 from app.schemas.transaction import account_transaction_details_schema
 from app.views.user import User
 
+
 class BankAccountResource(Resource):
     def post(self):
         """
@@ -61,14 +62,21 @@ class BankAccountResource(Resource):
             code = random.randint(10000, 99999)
             account_number = f'{branch_id}{code}'
 
-            bank_account_data = BankAccount(
-                account_number=account_number,
-                is_active=1,
-                is_deleted=0,
-                account_balance=data['account_balance'],
-                user_id=data['user_id'],
-                account_type_id=data['account_type_id'],
-                branch_id=branch_id)
+            try:
+                bank_account_data = BankAccount(
+                    account_number=account_number,
+                    is_active=1,
+                    is_deleted=0,
+                    account_balance=data['account_balance'],
+                    user_id=data['user_id'],
+                    account_type_id=data['account_type_id'],
+                    branch_id=branch_id)
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             if bank_account_data.account_balance <= 1000:
                 raise BankAccountObjectNotFound("Minimum balances required while creating account")
@@ -368,9 +376,15 @@ class AccountTypeResource(Resource):
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
-
-            account_type_data = AccountType(
-                account_type=data['account_type'])
+            try:
+                account_type_data = AccountType(
+                    account_type=data['account_type'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             if account_type_data.account_type.lower() not in ["saving", "current"]:
                 raise AccountTypeObjectNotFound
@@ -565,9 +579,16 @@ class BranchDetailsResource(Resource):
                                              success=False,
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
-
-            branch_details_data = BranchDetails(
-                branch_address=data['branch_address'])
+            try:
+                branch_details_data = BranchDetails(
+                    branch_name=data['branch_name'],
+                    branch_address=data['branch_address'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(branch_details_data)
             db.session.commit()
@@ -711,6 +732,7 @@ class BranchDetailsResourceId(Resource):
             if not branch_details_data:
                 raise BranchDetailsObjectNotFound("Branch details with this id does not exist")
 
+            branch_details_data.branch_name = data.get('branch_name', branch_details_data.name)
             branch_details_data.branch_address = data.get('branch_address', branch_details_data.branch_address)
             db.session.commit()
             result = branch_details_schema.dump(branch_details_data)

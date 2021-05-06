@@ -2,7 +2,7 @@ from app import api
 from app.views.user import UserResources, UserResourcesId, UserTypeResource, UserTypeResourceId
 from app.views.account import BankAccountResource, BankAccountResourceId, AccountTypeResource, AccountTypeResourceId, BranchDetailsResource, BranchDetailsResourceId
 from app.views.transaction import AccountTransactionDetailsResource, AccountTransactionDetailsResourceBankId, AccountTransactionDetailsResourceId, TransactionTypeResource, TransactionTypeResourceId, FundTransferResource, FundTransferResourceId, MiniStatementResources
-
+from app.views.login_logout import Login, Logout
 
 api.add_resource(UserResources, '/user')
 api.add_resource(UserResourcesId, '/user/<int:user_id>')
@@ -22,3 +22,5 @@ api.add_resource(TransactionTypeResourceId, '/transactiontype/<int:transaction_t
 api.add_resource(FundTransferResource, '/fundtransfer')
 api.add_resource(FundTransferResourceId, '/fundtransfer/<int:fund_transfer_id>')
 api.add_resource(MiniStatementResources, '/ministatement/<int:bank_account_id>')
+api.add_resource(Login, '/login')
+api.add_resource(Logout, '/logout')
