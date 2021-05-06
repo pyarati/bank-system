@@ -8,7 +8,7 @@ from app import jwt
 from http import HTTPStatus
 from app.common.custom_exception import UserObjectNotFound, PasswordWrong
 from app.models.tokenblocklist import TokenBlockList
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_jwt
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from datetime import datetime, timezone
 import bcrypt
 
@@ -29,8 +29,8 @@ class Login(Resource):
                      description: Bad request
         """
         try:
-            email_id = request.json.get("email_id", None)
-            password = request.json.get("password", None)
+            email_id = request.json.get("email_id")
+            password = request.json.get("password")
             if not email_id:
                 logger.warning("Missing email id")
                 response = ResponseGenerator(data={},
@@ -82,13 +82,6 @@ class Login(Resource):
 
 
 class Logout(Resource):
-    @jwt.token_in_blocklist_loader
-    def check_if_token_is_revoked(jwt_header, jwt_payload):
-        jti = jwt_payload["jti"]
-        token = db.session.query(TokenBlockList.id).filter_by(jti=jti).scalar()
-        if token:
-            return True
-
     @jwt_required()
     def delete(self):
         try:

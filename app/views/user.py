@@ -17,8 +17,6 @@ def custom_validator(view_function):
     @wraps(view_function)
     def wrapper(*args, **kwargs):
         jwt_data = decode_token(encoded_token='access_token')
-
-        # Do your custom validation here.
         try:
             if not jwt_data:
                 raise NoAuthorizationError("Token invalid")

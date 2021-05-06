@@ -11,8 +11,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:mySQL@123@localhos
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["DEBUG"] = True
 app.config["JWT_SECRET_KEY"] = '1234567890abcdefghijklmnopqrstuvwxyz'
-app.config['JWT_COOKIE_CSRF_PROTECT'] = True
-app.config['JWT_CSRF_CHECK_FORM'] = True
 app.config['PROPAGATE_EXCEPTIONS'] = True
 ACCESS_EXPIRES = timedelta(minutes=30)
 
