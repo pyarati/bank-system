@@ -39,9 +39,11 @@ class AccountType(db.Model):
 class BranchDetails(db.Model):
     __tablename__ = 'BranchDetails'
     id = db.Column(db.Integer, primary_key=True)
+    branch_name = db.Column(db.String(50), nullable=False)
     branch_address = db.Column(db.String(50), nullable=False)
 
     bank_account = db.relationship('BankAccount', backref='BranchDetails', lazy=True)
 
-    def __init__(self, branch_address):
+    def __init__(self, branch_name, branch_address):
+        self.branch_name = branch_name
         self.branch_address = branch_address

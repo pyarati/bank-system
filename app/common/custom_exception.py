@@ -8,6 +8,10 @@ class ExceptionHandler(Exception):
             self.message = None
 
 
+class PasswordWrong(ExceptionHandler):
+    pass
+
+
 class UserObjectNotFound(ExceptionHandler):
     """Raised when User Object Not Found"""
     pass

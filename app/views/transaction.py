@@ -11,9 +11,11 @@ from app.models.account import BankAccount
 from app.models.transaction import AccountTransactionDetails, TransactionType, FundTransfer
 from app.schemas.transaction import account_transaction_details_schema, accounts_transaction_details_schema, \
     transaction_type_schema, transactions_type_schema, fund_transfer_schema, funds_transfer_schema
+from flask_jwt_extended import jwt_required
 
 
 class AccountTransactionDetailsResource(Resource):
+    @jwt_required()
     def post(self):
         """
               This is POST API
@@ -80,15 +82,22 @@ class AccountTransactionDetailsResource(Resource):
             db.session.commit()
             fund_transfer = fund_transfer_schema.dump(fund_transfer_data)
 
-            # create account transaction
-            bank_account_data = AccountTransactionDetails(
-                transaction_amount=data['transaction_amount'],
-                transaction_status=transaction_status,
-                bank_account_id=data['bank_account_id'],
-                transaction_type_id=data['transaction_type_id'],
-                fund_transfer_id=fund_transfer.get('id'),
-                fund_transfer_info=data['fund_transfer_info']
-            )
+            try:
+                # create account transaction
+                bank_account_data = AccountTransactionDetails(
+                    transaction_amount=data['transaction_amount'],
+                    transaction_status=transaction_status,
+                    bank_account_id=data['bank_account_id'],
+                    transaction_type_id=data['transaction_type_id'],
+                    fund_transfer_id=fund_transfer.get('id'),
+                    fund_transfer_info=data['fund_transfer_info']
+                )
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(bank_account_data)
             db.session.commit()
@@ -127,6 +136,7 @@ class AccountTransactionDetailsResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -175,6 +185,7 @@ class AccountTransactionDetailsResource(Resource):
 
 
 class AccountTransactionDetailsResourceBankId(Resource):
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -234,6 +245,7 @@ class AccountTransactionDetailsResourceBankId(Resource):
 
 
 class AccountTransactionDetailsResourceId(Resource):
+    @jwt_required()
     def put(self, account_transaction_details_id):
         """
              This is PUT API
@@ -307,6 +319,7 @@ class AccountTransactionDetailsResourceId(Resource):
 
 
 class TransactionTypeResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -331,8 +344,15 @@ class TransactionTypeResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
-            transaction_type_data = TransactionType(
-                transaction_type=data['transaction_type'])
+            try:
+                transaction_type_data = TransactionType(
+                    transaction_type=data['transaction_type'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             if transaction_type_data.transaction_type.lower() not in ["credit", "debit"]:
                 raise TransactionTypeObjectNotFound("Transaction type does not exist")
@@ -361,6 +381,7 @@ class TransactionTypeResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -403,6 +424,7 @@ class TransactionTypeResource(Resource):
 
 
 class TransactionTypeResourceId(Resource):
+    @jwt_required()
     def get(self, transaction_type_id):
         """
              This is GET API
@@ -445,6 +467,7 @@ class TransactionTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, transaction_type_id):
         """
               This is PUT API
@@ -501,6 +524,7 @@ class TransactionTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def delete(self, transaction_type_id):
         """
              This is DELETE API
@@ -544,6 +568,7 @@ class TransactionTypeResourceId(Resource):
 
 
 class FundTransferResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -569,10 +594,17 @@ class FundTransferResource(Resource):
                                              status=HTTPStatus.BAD_REQUEST)
                 return response.error_response()
 
-            # fund transfer type - funds transfer
-            fund_transfer_data = FundTransfer(
-                from_account=data['from_account'],
-                to_account=data['to_account'])
+            try:
+                # fund transfer type - funds transfer
+                fund_transfer_data = FundTransfer(
+                    from_account=data['from_account'],
+                    to_account=data['to_account'])
+            except KeyError as err:
+                response = ResponseGenerator(data={},
+                                             message="Column '{}' cannot be null".format(err.args[0]),
+                                             success=False,
+                                             status=HTTPStatus.BAD_REQUEST)
+                return response.success_response()
 
             db.session.add(fund_transfer_data)
             db.session.commit()
@@ -665,6 +697,7 @@ class FundTransferResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -708,6 +741,7 @@ class FundTransferResource(Resource):
 
 
 class FundTransferResourceId(Resource):
+    @jwt_required()
     def get(self, fund_transfer_id):
         """
              This is GET API
@@ -751,6 +785,7 @@ class FundTransferResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, fund_transfer_id):
         """
              This is PUT API
@@ -811,6 +846,7 @@ class FundTransferResourceId(Resource):
 
 
 class MiniStatementResources(Resource):
+    @jwt_required()
     def get(self, bank_account_id):
         try:
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id).first()
