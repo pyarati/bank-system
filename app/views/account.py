@@ -12,9 +12,11 @@ from app.common.custom_exception import BankAccountObjectNotFound, AccountTypeOb
 from app.views.transaction import AccountTransactionDetails, FundTransfer, TransactionType
 from app.schemas.transaction import account_transaction_details_schema
 from app.views.user import User
+from flask_jwt_extended import jwt_required
 
 
 class BankAccountResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -145,6 +147,7 @@ class BankAccountResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -193,6 +196,7 @@ class BankAccountResource(Resource):
 
 
 class BankAccountResourceId(Resource):
+    @jwt_required()
     def get(self, bank_account_id):
         """
              This is GET API
@@ -240,6 +244,7 @@ class BankAccountResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, bank_account_id):
         """
              This is PUT API
@@ -305,6 +310,7 @@ class BankAccountResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def delete(self, bank_account_id):
         """
              This is DELETE API
@@ -353,6 +359,7 @@ class BankAccountResourceId(Resource):
 
 
 class AccountTypeResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -413,6 +420,7 @@ class AccountTypeResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -456,6 +464,7 @@ class AccountTypeResource(Resource):
 
 
 class AccountTypeResourceId(Resource):
+    @jwt_required()
     def get(self, account_type_id):
         """
              This is GET API
@@ -498,6 +507,7 @@ class AccountTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, account_type_id):
         """
              This is PUT API
@@ -555,6 +565,7 @@ class AccountTypeResourceId(Resource):
 
 
 class BranchDetailsResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -614,6 +625,7 @@ class BranchDetailsResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -658,6 +670,7 @@ class BranchDetailsResource(Resource):
 
 
 class BranchDetailsResourceId(Resource):
+    @jwt_required()
     def get(self, branch_details_id):
         """
              This is GET API
@@ -701,6 +714,7 @@ class BranchDetailsResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, branch_details_id):
         """
              This is PUT API
@@ -758,6 +772,7 @@ class BranchDetailsResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def delete(self, branch_details_id):
         """
              This is DELETE API

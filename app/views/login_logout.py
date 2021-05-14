@@ -11,9 +11,34 @@ from app.models.tokenblocklist import TokenBlockList
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from datetime import datetime, timezone
 import bcrypt
+error_string = "Invalid Token"
 
 
 class Login(Resource):
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        response = ResponseGenerator(data={},
+                                     message="Token expired",
+                                     success=False,
+                                     status=HTTPStatus.UNAUTHORIZED)
+        return response.error_response()
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        response = ResponseGenerator(data={},
+                                     message="Revoked token, logged out ",
+                                     success=False,
+                                     status=HTTPStatus.UNAUTHORIZED)
+        return response.error_response()
+
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        response = ResponseGenerator(data={},
+                                     message="Invalid Token",
+                                     success=False,
+                                     status=HTTPStatus.UNAUTHORIZED)
+        return response.error_response()
+
     def post(self):
         """
               This is POST API
@@ -82,6 +107,12 @@ class Login(Resource):
 
 
 class Logout(Resource):
+    @jwt.token_in_blocklist_loader
+    def check_if_token_required(jwt_header, jwt_payload):
+        jti = jwt_payload['jti']
+        token = db.session.query(TokenBlockList.id).filter_by(jti=jti).scalar()
+        return token is not None
+
     @jwt_required()
     def delete(self):
         try:

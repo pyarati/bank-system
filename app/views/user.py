@@ -7,29 +7,8 @@ from app.schemas.user import user_schema, users_schema, user_type_schema, users_
 from app.common.response_genarator import ResponseGenerator
 from http import HTTPStatus
 from app.common.custom_exception import UserObjectNotFound, UserTypeObjectNotFound
-from flask_jwt_extended import jwt_required, decode_token
+from flask_jwt_extended import jwt_required
 import bcrypt
-from functools import wraps
-from flask_jwt_extended.exceptions import NoAuthorizationError
-
-
-def custom_validator(view_function):
-    @wraps(view_function)
-    def wrapper(*args, **kwargs):
-        jwt_data = decode_token(encoded_token='access_token')
-        try:
-            if not jwt_data:
-                raise NoAuthorizationError("Token invalid")
-
-        except NoAuthorizationError as err:
-            logger.exception(err)
-            response = ResponseGenerator(data={},
-                                         message=err,
-                                         success=False,
-                                         status=HTTPStatus.UNAUTHORIZED)
-            return response.error_response()
-        return view_function(*args, **kwargs)
-    return jwt_required(wrapper)
 
 
 def is_email_id_exists(email_id):
@@ -42,6 +21,7 @@ def is_mobile_number_exists(mobile_number):
 
 
 class UserResources(Resource):
+    @jwt_required()
     def post(self):
         """
             This is POST API
@@ -149,6 +129,7 @@ class UserResources(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -200,6 +181,7 @@ class UserResources(Resource):
 
 
 class UserResourcesId(Resource):
+    @jwt_required()
     def get(self, user_id):
         """
             This is GET API
@@ -251,6 +233,7 @@ class UserResourcesId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, user_id):
         """
             This is PUT API
@@ -343,6 +326,7 @@ class UserResourcesId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def delete(self, user_id):
         """
             This is DELETE API
@@ -393,6 +377,7 @@ class UserResourcesId(Resource):
 
 
 class UserTypeResource(Resource):
+    @jwt_required()
     def post(self):
         """
             This is DELETE API
@@ -455,6 +440,7 @@ class UserTypeResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
             This is GET API
@@ -499,6 +485,7 @@ class UserTypeResource(Resource):
 
 
 class UserTypeResourceId(Resource):
+    @jwt_required()
     def get(self, user_type_id):
         """
             This is GET API
@@ -542,6 +529,7 @@ class UserTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, user_type_id):
         """
             This is PUT API

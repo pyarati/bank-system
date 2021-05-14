@@ -11,9 +11,11 @@ from app.models.account import BankAccount
 from app.models.transaction import AccountTransactionDetails, TransactionType, FundTransfer
 from app.schemas.transaction import account_transaction_details_schema, accounts_transaction_details_schema, \
     transaction_type_schema, transactions_type_schema, fund_transfer_schema, funds_transfer_schema
+from flask_jwt_extended import jwt_required
 
 
 class AccountTransactionDetailsResource(Resource):
+    @jwt_required()
     def post(self):
         """
               This is POST API
@@ -134,6 +136,7 @@ class AccountTransactionDetailsResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -182,6 +185,7 @@ class AccountTransactionDetailsResource(Resource):
 
 
 class AccountTransactionDetailsResourceBankId(Resource):
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -241,6 +245,7 @@ class AccountTransactionDetailsResourceBankId(Resource):
 
 
 class AccountTransactionDetailsResourceId(Resource):
+    @jwt_required()
     def put(self, account_transaction_details_id):
         """
              This is PUT API
@@ -314,6 +319,7 @@ class AccountTransactionDetailsResourceId(Resource):
 
 
 class TransactionTypeResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -375,6 +381,7 @@ class TransactionTypeResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -417,6 +424,7 @@ class TransactionTypeResource(Resource):
 
 
 class TransactionTypeResourceId(Resource):
+    @jwt_required()
     def get(self, transaction_type_id):
         """
              This is GET API
@@ -459,6 +467,7 @@ class TransactionTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, transaction_type_id):
         """
               This is PUT API
@@ -515,6 +524,7 @@ class TransactionTypeResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def delete(self, transaction_type_id):
         """
              This is DELETE API
@@ -558,6 +568,7 @@ class TransactionTypeResourceId(Resource):
 
 
 class FundTransferResource(Resource):
+    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -686,6 +697,7 @@ class FundTransferResource(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def get(self):
         """
              This is GET API
@@ -729,6 +741,7 @@ class FundTransferResource(Resource):
 
 
 class FundTransferResourceId(Resource):
+    @jwt_required()
     def get(self, fund_transfer_id):
         """
              This is GET API
@@ -772,6 +785,7 @@ class FundTransferResourceId(Resource):
 
         return response.error_response()
 
+    @jwt_required()
     def put(self, fund_transfer_id):
         """
              This is PUT API
@@ -832,6 +846,7 @@ class FundTransferResourceId(Resource):
 
 
 class MiniStatementResources(Resource):
+    @jwt_required()
     def get(self, bank_account_id):
         try:
             bank_account_data = BankAccount.query.filter(BankAccount.id == bank_account_id).first()
