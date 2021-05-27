@@ -15,7 +15,6 @@ from flask_jwt_extended import jwt_required
 
 
 class AccountTransactionDetailsResource(Resource):
-    @jwt_required()
     def post(self):
         """
               This is POST API
@@ -319,7 +318,6 @@ class AccountTransactionDetailsResourceId(Resource):
 
 
 class TransactionTypeResource(Resource):
-    @jwt_required()
     def post(self):
         """
              This is POST API
@@ -568,7 +566,6 @@ class TransactionTypeResourceId(Resource):
 
 
 class FundTransferResource(Resource):
-    @jwt_required()
     def post(self):
         """
              This is POST API

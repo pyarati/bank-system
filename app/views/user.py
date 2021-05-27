@@ -21,7 +21,6 @@ def is_mobile_number_exists(mobile_number):
 
 
 class UserResources(Resource):
-    @jwt_required()
     def post(self):
         """
             This is POST API
@@ -377,7 +376,6 @@ class UserResourcesId(Resource):
 
 
 class UserTypeResource(Resource):
-    @jwt_required()
     def post(self):
         """
             This is DELETE API

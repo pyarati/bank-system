@@ -1,4 +1,9 @@
 from __future__ import with_statement
+from app.models import account
+from app.models import user
+from app.models import tokenblocklist
+from app.models import transaction
+
 
 import logging
 from logging.config import fileConfig
