@@ -16,53 +16,42 @@ Project is created with:
 To run this project, 
 Use the package manager [pip](https://pip.pypa.io/en/stable/)
 
-### Flask
-**Flask** is a popular Python web framework, meaning it is a third-party Python library used for developing web applications.
+### Virtual Environment
+#### Installing virtualenv
+virtualenv is used to manage Python packages for different projects.You can install virtualenv using pip.
 ```
-use the following command to install Flask:
-$  pip install Flask
+$ python3 -m pip install --user virtualenv
 ```
-
-### Flask - Sqlalchemy
+#### Create an environment
+Create a project folder and a venv folder within:
 ```
-use the following command to install Flask Sqlalchemy
-$ pip install flask-sqlalchemy
+$ mkdir bank-system
+$ cd bank-system
+$ python3 -m venv bank_env
 ```
-
-### Flask - RESTful
-**Flask-RESTful** is an extension for Flask that adds support for quickly building REST APIs. It is a lightweight abstraction that works with your existing ORM/libraries.
+#### Activate the environment
+Before you can start installing or using packages in your virtual environment you’ll need to activate it. 
 ```
-use the following command to install Flask restful
-$ pip install flask-restful
+$ source bank_env/bin/activate
 ```
-
-### Flask marshmallow
-Flask-Marshmallow is a thin integration layer for flask(a Python web framework) and marshmallow(an object serialization/deserialization library)
+#### Leaving the virtual environment
+f you want to switch projects or otherwise leave your virtual environment, simply run:
 ```
-use the following command to install Flask marshmallow
-$ pip install flask-marshmallow
+$ deactivate
 ```
-
-### Flask jwt extended
+## way 1
+### Using requirements files
+Pip can export a list of all installed packages and their versions using the freeze command:
 ```
-use the following command to install Flask jwt extended
-$ pip install flask-jwt-extended
+$ pip freeze > requirement.txt
 ```
-
-### Flask script
-**Flask-Script** extension provides support for writing external scripts in Flask.
+Instead of installing packages individually, pip allows you to declare all dependencies in a Requirements File.
 ```
-$ pip install Flask-Script
-```
-
-### Flask Migrate
-**Flask-Migrate** is an extension that handles SQLAlchemy database migrations for Flask applications using Alembic. The database operations are made available through the Flask command-line interface.
-```
-use the following command to install Flask Migrate
-$ pip install Flask-Migrate
+$ pip install -r requirement.txt
 ```
 
 #### Migration Commands
+For migration commands we need to install flask-script and flask-migrate
 ```
 create a migration repository with the following command
 $ flask db init
@@ -95,5 +84,3 @@ If we want to add new column in table then we have to drop all table with losing
 ```
 $ python run.py
 ```
-### POSTMAN Collections
-[POSTMAN API](https://www.getpostman.com/collections/73332f547b6b0b6c18d5)
