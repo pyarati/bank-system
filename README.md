@@ -39,7 +39,6 @@ f you want to switch projects or otherwise leave your virtual environment, simpl
 ```
 $ deactivate
 ```
-## way 1
 ### Using requirements files
 Pip can export a list of all installed packages and their versions using the freeze command:
 ```
