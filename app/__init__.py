@@ -9,9 +9,10 @@ from app.models import *
 from flask_script import Manager
 from os import environ
 
+
 app1 = Flask(__name__)
 app1.config['SECRET_KEY'] = '\x1f\x19\xc7\x95\xb6\xac\xd9\x1c\xbd\xd8%V\xd8\x1b@\xdf!\x13A\x9eW8\xa7\xc0'
-app1.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}'.format(environ.get('DATABASE_USERNAME'), environ.get('DATABASE_PASSWORD'), environ.get('DATABASE_HOST'))
+app1.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}/{}'.format(environ.get('DATABASE_USERNAME'), environ.get('DATABASE_PASSWORD'), environ.get('DATABASE_HOST'), environ.get('DATABASE_NAME'))
 app1.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app1.config["DEBUG"] = True
 app1.config["JWT_SECRET_KEY"] = '1234567890abcdefghijklmnopqrstuvwxyz'

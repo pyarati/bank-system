@@ -40,15 +40,15 @@ f you want to switch projects or otherwise leave your virtual environment, simpl
 $ deactivate
 ```
 ### Using requirements files
-Pip can export a list of all installed packages and their versions using the freeze command:
-```
-$ pip freeze > requirement.txt
-```
 Instead of installing packages individually, pip allows you to declare all dependencies in a Requirements File.
 ```
 $ pip install -r requirement.txt
 ```
-
+If you install any new package then you can create another requirement.txt file.  
+Pip can export a list of all installed packages and their versions using the freeze command:
+```
+$ pip freeze > requirement.txt
+```
 #### Migration Commands
 For migration commands we need to install flask-script and flask-migrate
 ```
