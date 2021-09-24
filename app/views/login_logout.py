@@ -80,7 +80,7 @@ class Login(Resource):
 
             access_token = create_access_token(identity={"email_id": email_id, "password": password})
             logger.info("Successfully logged in")
-            response = ResponseGenerator(data={"access_token": access_token},
+            response = ResponseGenerator(data={"access_token": access_token, "id": user_data.id, "first_name": user_data.first_name},
                                          message="Successfully logged in",
                                          success=True,
                                          status=HTTPStatus.CREATED)
