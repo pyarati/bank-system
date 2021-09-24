@@ -21,7 +21,6 @@ def is_mobile_number_exists(mobile_number):
 
 
 class UserResources(Resource):
-    @jwt_required()
     def post(self):
         """
             This is POST API
@@ -155,6 +154,10 @@ class UserResources(Resource):
             users = User.query.filter(User.is_deleted == 0)
             if users.count() == 0:
                 raise UserObjectNotFound("User does not exist")
+
+            email_id = request.args.get('email_id')
+            if email_id:
+                users = users.filter_by(email_id=email_id)
 
             result = users_schema.dump(users)
 
@@ -292,14 +295,15 @@ class UserResourcesId(Resource):
             if not user:
                 raise UserObjectNotFound("User with this id does not exist")
 
-            hashed = bcrypt.hashpw(data.get('password', user.password).encode('utf-8'), bcrypt.gensalt())
+            if data.get('password'):
+                hashed = bcrypt.hashpw(data.get('password', user.password).encode('utf-8'), bcrypt.gensalt())
+                user.password = hashed
 
             user.first_name = data.get('first_name', user.first_name)
             user.last_name = data.get('last_name', user.last_name)
             user.address = data.get('address', user.address)
             user.mobile_number = data.get('mobile_number', user.mobile_number)
             user.email_id = data.get('email_id', user.email_id)
-            user.password = hashed
             user.user_type_id = data.get('user_type_id', user.user_type_id)
 
             db.session.commit()

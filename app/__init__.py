@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_restplus import Api
@@ -8,6 +9,7 @@ from datetime import timedelta
 from app.models import *
 from flask_script import Manager
 from os import environ
+from flask_cors import CORS
 
 
 app1 = Flask(__name__)
@@ -17,7 +19,7 @@ app1.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app1.config["DEBUG"] = True
 app1.config["JWT_SECRET_KEY"] = '1234567890abcdefghijklmnopqrstuvwxyz'
 app1.config['PROPAGATE_EXCEPTIONS'] = True
-ACCESS_EXPIRES = timedelta(minutes=30)
+app1.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=1)
 
 #  Create a Flask-RESTPlus API
 api = Api(app1)
@@ -26,3 +28,4 @@ ma = Marshmallow(app1)
 jwt = JWTManager(app1)
 migrate = Migrate(app1, db, compare_type=True)
 manager = Manager(app1)
+CORS(app1)
