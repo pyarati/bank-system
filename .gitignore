@@ -5,4 +5,5 @@ app/models/__pycache__/
 app/schemas/__pycache__/
 app/views/__pycache__/
 bank_env/
+bank/node_modules
 record.log
